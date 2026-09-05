@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: crm
+      POSTGRES_DB: service_crm
+    ports:
+      - '5434:5432'
+    volumes:
+      - service-crm-postgres:/var/lib/postgresql/data
+
+volumes:
+  service-crm-postgres:
