@@ -8,11 +8,12 @@ from fastapi.staticfiles import StaticFiles
 from starlette.types import Scope
 
 from .automation import run_all_active_campaigns
+from .birthday_page import BIRTHDAY_PAGE_HTML
 from .config import ROOT_DIR, settings
 from .database import SessionLocal
 from .rdv_page import RDV_PAGE_HTML
 from .review_page import REVIEW_PAGE_HTML
-from .routers import appointments, auth, campaigns, clients, relances, reviews, services, timeline
+from .routers import appointments, auth, birthdays, campaigns, clients, relances, reviews, services, timeline
 
 logger = logging.getLogger("app.automation")
 
@@ -44,6 +45,7 @@ app.include_router(services.router)
 app.include_router(services.public_router)
 app.include_router(reviews.router)
 app.include_router(appointments.router)
+app.include_router(birthdays.router)
 
 
 @app.get("/avis", response_class=HTMLResponse, include_in_schema=False)
@@ -56,6 +58,12 @@ def review_page() -> str:
 def rdv_page() -> str:
     """Page publique (sans connexion) de prise de rendez-vous, partagée via les messages de relance."""
     return RDV_PAGE_HTML
+
+
+@app.get("/anniversaire", response_class=HTMLResponse, include_in_schema=False)
+def birthday_page() -> str:
+    """Page publique (sans connexion) de collecte de la date d'anniversaire (jour+mois), à valider par l'institut."""
+    return BIRTHDAY_PAGE_HTML
 
 
 if settings.environment == "production":

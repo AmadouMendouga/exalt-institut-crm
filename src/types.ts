@@ -1,4 +1,4 @@
-export type NavScreen = 'overview' | 'customers' | 'services' | 'automations' | 'schedule' | 'analytics' | 'reviews' | 'appointments';
+export type NavScreen = 'overview' | 'customers' | 'services' | 'automations' | 'schedule' | 'analytics' | 'reviews' | 'appointments' | 'birthdaySubmissions';
 
 export type Gender = 'F' | 'M';
 
@@ -100,6 +100,18 @@ export interface Appointment {
   startsAt: string;
   durationMinutes: number;
   status: AppointmentStatus;
+  createdAt: string;
+}
+
+export type BirthdaySubmissionStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export interface BirthdaySubmission {
+  id: string;
+  name: string;
+  phone: string;
+  birthDate: string; // "MM-DD"
+  status: BirthdaySubmissionStatus;
+  clientId: string | null;
   createdAt: string;
 }
 

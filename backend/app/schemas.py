@@ -260,3 +260,36 @@ class AppointmentStatusUpdate(BaseModel):
     model_config = CamelModel
 
     status: str
+
+
+class BirthdaySubmissionCreate(BaseModel):
+    model_config = CamelModel
+
+    name: str
+    phone: str
+    birth_date: str  # "MM-DD"
+
+
+class BirthdaySubmissionOut(BaseModel):
+    model_config = CamelModel
+
+    id: str
+    name: str
+    phone: str
+    birth_date: str
+    status: str
+    client_id: str | None
+    created_at: datetime
+
+
+class BirthdaySubmissionStatusUpdate(BaseModel):
+    model_config = CamelModel
+
+    status: str
+
+
+class BirthdaySubmissionStatusResult(BaseModel):
+    submission: BirthdaySubmissionOut
+    client: ClientOut | None = None
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
