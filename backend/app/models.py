@@ -197,6 +197,7 @@ class BirthdaySubmission(Base):
     name: Mapped[str] = mapped_column(String)
     phone: Mapped[str] = mapped_column(String)
     birth_date: Mapped[str] = mapped_column(String)  # "MM-DD", même format que Client.birth_date
+    gender: Mapped[str] = mapped_column(String, default="F")  # "F" ou "M", choisi sur la page publique
     status: Mapped[str] = mapped_column(String, default="Pending")
     client_id: Mapped[str | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=_now)

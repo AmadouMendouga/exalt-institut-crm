@@ -32,10 +32,12 @@ def _avatar_bg(gender: str) -> str:
 @router.post("", response_model=BirthdaySubmissionOut, status_code=201)
 def create_birthday_submission(payload: BirthdaySubmissionCreate, db: Session = Depends(get_db)):
     """Public endpoint: a client submits their birthday (day+month, no year) from the /anniversaire page."""
+    gender = payload.gender if payload.gender in ("F", "M") else "F"
     submission = models.BirthdaySubmission(
         name=payload.name,
         phone=payload.phone,
         birth_date=payload.birth_date,
+        gender=gender,
     )
     db.add(submission)
     db.commit()
@@ -68,8 +70,8 @@ def update_birthday_submission_status(submission_id: str, payload: BirthdaySubmi
             today = datetime.now(timezone.utc).date().isoformat()
             client = models.Client(
                 name=submission.name,
-                prefix="Mme.",
-                gender="F",
+                prefix="Mme." if submission.gender == "F" else "M.",
+                gender=submission.gender,
                 initials=_initials(submission.name),
                 email=f"{submission.name.lower().replace(' ', '.')}@example.com",
                 phone=submission.phone,
@@ -79,7 +81,7 @@ def update_birthday_submission_status(submission_id: str, payload: BirthdaySubmi
                 status="Follow-up Needed",
                 suggested_upsell="Soin Protecteur",
                 preferred_channel="WhatsApp",
-                avatar_bg=_avatar_bg("F"),
+                avatar_bg=_avatar_bg(submission.gender),
                 birth_date=submission.birth_date,
                 marketing_opt_in=True,
             )

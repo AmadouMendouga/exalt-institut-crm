@@ -97,6 +97,20 @@ _TEMPLATE = """<!doctype html>
   }
   .date-row { display: flex; gap: 10px; }
   .date-row select { flex: 1; min-width: 0; }
+  .gender-row { display: flex; gap: 10px; }
+  .gender-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-page);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .gender-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
   .error {
     color: #b3261e;
     font-size: 0.85rem;
@@ -134,6 +148,12 @@ _TEMPLATE = """<!doctype html>
     <div class="step active" id="step-form">
       <h2 class="headline">On aimerait fêter votre anniversaire comme il se doit</h2>
       <p class="lede">Laissez-nous votre date de naissance : nous ne manquerons pas l'occasion de vous réserver une petite attention le jour venu.</p>
+
+      <label class="field-label">Vous êtes</label>
+      <div class="gender-row">
+        <button type="button" class="gender-btn active" id="gender-f" data-gender="F">Madame</button>
+        <button type="button" class="gender-btn" id="gender-m" data-gender="M">Monsieur</button>
+      </div>
 
       <label class="field-label">Prénom et nom</label>
       <input type="text" id="name" placeholder="Ex. Salma Bennani" autocomplete="name" />
@@ -181,6 +201,20 @@ _TEMPLATE = """<!doctype html>
     document.getElementById(id).classList.add('active');
   }
 
+  var gender = 'F';
+  var genderFBtn = document.getElementById('gender-f');
+  var genderMBtn = document.getElementById('gender-m');
+  genderFBtn.addEventListener('click', function () {
+    gender = 'F';
+    genderFBtn.classList.add('active');
+    genderMBtn.classList.remove('active');
+  });
+  genderMBtn.addEventListener('click', function () {
+    gender = 'M';
+    genderMBtn.classList.add('active');
+    genderFBtn.classList.remove('active');
+  });
+
   document.getElementById('submit').addEventListener('click', function () {
     var submitBtn = this;
     var errorEl = document.getElementById('error');
@@ -200,7 +234,7 @@ _TEMPLATE = """<!doctype html>
     fetch('/api/birthday-submissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name, phone: phone, birthDate: month + '-' + day })
+      body: JSON.stringify({ name: name, phone: phone, birthDate: month + '-' + day, gender: gender })
     })
       .then(function (res) {
         if (!res.ok) throw new Error('request failed');

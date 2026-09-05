@@ -8,6 +8,7 @@ import {
   Bell,
   Heart,
   Cake,
+  PartyPopper,
   Sun,
   Check,
   SkipForward,
@@ -49,7 +50,8 @@ export const BulkRelanceModal: React.FC<BulkRelanceModalProps> = ({ clients, isO
     { id: 'discount', label: t.tplDiscount, icon: Gift },
     { id: 'periodic_reminder', label: t.tplPeriodicReminder, icon: Bell },
     { id: 'reengagement', label: t.tplReengagement, icon: Heart },
-    { id: 'birthday', label: t.tplBirthday, icon: Cake }
+    { id: 'birthday', label: t.tplBirthday, icon: Cake },
+    { id: 'birthday_request', label: t.tplBirthdayRequest, icon: PartyPopper }
   ];
 
   const currentClient: Client | undefined = clients[currentIndex];

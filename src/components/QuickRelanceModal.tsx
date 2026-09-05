@@ -16,6 +16,7 @@ import {
   Bell,
   Heart,
   Cake,
+  PartyPopper,
   Sun
 } from 'lucide-react';
 import { Client, ChannelType, RelanceType } from '../types';
@@ -64,6 +65,7 @@ export const QuickRelanceModal: React.FC<QuickRelanceModalProps> = ({
     { id: 'periodic_reminder', label: t.tplPeriodicReminder, icon: Bell },
     { id: 'reengagement', label: t.tplReengagement, icon: Heart },
     { id: 'birthday', label: t.tplBirthday, icon: Cake },
+    { id: 'birthday_request', label: t.tplBirthdayRequest, icon: PartyPopper },
     { id: 'checkin', label: t.tplCheckin, icon: Sun }
   ];
 

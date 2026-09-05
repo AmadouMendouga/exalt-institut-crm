@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Clock,
   MessageCircle,
+  Cake,
   X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -111,6 +112,13 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
   };
 
   const clearSelection = () => setSelectedIds(new Set());
+
+  // Clients sans date de naissance connue : ceux à qui envoyer la demande
+  // (page publique /anniversaire) a du sens.
+  const clientsMissingBirthdate = useMemo(() => clients.filter((c) => !c.birthDate), [clients]);
+  const selectClientsMissingBirthdate = () => {
+    setSelectedIds(new Set(clientsMissingBirthdate.map((c) => c.id)));
+  };
 
   return (
     <motion.div
@@ -282,6 +290,19 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Raccourci : cibler d'un clic les clients dont la date de naissance n'est pas
+          encore connue, pour leur envoyer la demande via /anniversaire. */}
+      {onBulkRelance && clientsMissingBirthdate.length > 0 && selectedIds.size === 0 && (
+        <button
+          type="button"
+          onClick={selectClientsMissingBirthdate}
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[var(--accent-dark)] hover:underline cursor-pointer"
+        >
+          <Cake className="w-3.5 h-3.5" />
+          <span>{t.selectMissingBirthdate} ({clientsMissingBirthdate.length})</span>
+        </button>
+      )}
 
       {/* Bulk Selection Bar — envoi groupé WhatsApp à plusieurs clients sélectionnés */}
       <AnimatePresence>

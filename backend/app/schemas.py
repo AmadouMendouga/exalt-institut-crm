@@ -268,6 +268,7 @@ class BirthdaySubmissionCreate(BaseModel):
     name: str
     phone: str
     birth_date: str  # "MM-DD"
+    gender: str = "F"  # "F" ou "M"
 
 
 class BirthdaySubmissionOut(BaseModel):
@@ -277,6 +278,7 @@ class BirthdaySubmissionOut(BaseModel):
     name: str
     phone: str
     birth_date: str
+    gender: str
     status: str
     client_id: str | None
     created_at: datetime

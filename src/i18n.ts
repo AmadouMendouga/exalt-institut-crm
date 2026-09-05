@@ -154,6 +154,7 @@ export const translations = {
     bulkClearSelection: 'Désélectionner',
     bulkSelectedCount: 'sélectionné(s)',
     bulkSendBtn: 'Envoi groupé',
+    selectMissingBirthdate: 'Sélectionner les clients sans date de naissance',
     bulkModalTitle: 'Envoi groupé WhatsApp',
     bulkModalSubtitle: 'Le même message, personnalisé pour chacun, envoyé à la suite via WhatsApp.',
     bulkClientLabel: 'Client',
@@ -240,6 +241,7 @@ export const translations = {
     tplPeriodicReminder: 'Rappel d\'Entretien Périodique',
     tplReengagement: 'Réengagement Client Inactif',
     tplBirthday: 'Cadeau Anniversaire Client',
+    tplBirthdayRequest: 'Demande de date de naissance',
     tplCheckin: 'Prise de Nouvelles',
 
     // Schedule Screen
@@ -544,6 +546,7 @@ export const translations = {
     bulkClearSelection: 'Clear selection',
     bulkSelectedCount: 'selected',
     bulkSendBtn: 'Bulk Send',
+    selectMissingBirthdate: 'Select clients missing a birthday',
     bulkModalTitle: 'Bulk WhatsApp Send',
     bulkModalSubtitle: 'The same message, personalized for each client, sent one after another via WhatsApp.',
     bulkClientLabel: 'Client',
@@ -630,6 +633,7 @@ export const translations = {
     tplPeriodicReminder: 'Periodic Maintenance Reminder',
     tplReengagement: 'Inactive Client Re-engagement',
     tplBirthday: 'Client Birthday Special Voucher',
+    tplBirthdayRequest: 'Birthday info request',
     tplCheckin: 'Just Checking In',
 
     // Schedule Screen

@@ -13,6 +13,7 @@ export type RelanceType =
   | 'periodic_reminder'
   | 'reengagement'
   | 'birthday'
+  | 'birthday_request'
   | 'checkin';
 
 export interface MessageTemplate {
@@ -110,6 +111,7 @@ export interface BirthdaySubmission {
   name: string;
   phone: string;
   birthDate: string; // "MM-DD"
+  gender: Gender;
   status: BirthdaySubmissionStatus;
   clientId: string | null;
   createdAt: string;
