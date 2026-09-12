@@ -30,7 +30,10 @@ def send_sms(phone: str, message: str) -> bool:
 
     digits = "".join(ch for ch in phone if ch.isdigit() or ch == "+")
     credentials = f"{settings.sms_gateway_login}:{settings.sms_gateway_password}".encode()
-    body = json.dumps({"message": message, "phoneNumbers": [digits]}).encode()
+    # Le téléphone a deux SIM ; seule la SIM 1 (Orange, forfait Pulse/SMS illimité)
+    # délivre réellement les messages. La SIM 2 échoue systématiquement
+    # (RESULT_ERROR_GENERIC_FAILURE) — confirmé en testant les deux explicitement.
+    body = json.dumps({"message": message, "phoneNumbers": [digits], "simNumber": 1}).encode()
 
     request = urllib.request.Request(
         API_URL,
