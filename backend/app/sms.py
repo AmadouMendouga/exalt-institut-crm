@@ -39,6 +39,9 @@ def send_sms(phone: str, message: str) -> bool:
         headers={
             "Content-Type": "application/json",
             "Authorization": "Basic " + base64.b64encode(credentials).decode(),
+            # Cloudflare (devant api.sms-gate.app) bloque le User-Agent par défaut
+            # de urllib ("Python-urllib/x.y") comme trafic de bot (403/1010).
+            "User-Agent": "curl/8.4.0",
         },
     )
     try:
