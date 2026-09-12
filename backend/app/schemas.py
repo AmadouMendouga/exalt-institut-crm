@@ -260,3 +260,105 @@ class AppointmentStatusUpdate(BaseModel):
     model_config = CamelModel
 
     status: str
+
+
+class ProspectBase(BaseModel):
+    model_config = CamelModel
+
+    name: str
+    phone: str
+    prospected_date: str
+    source: str | None = None
+    wave: str | None = None
+    civility: str | None = None
+    notes: str | None = None
+
+
+class ProspectCreate(ProspectBase):
+    pass
+
+
+class ProspectUpdate(ProspectBase):
+    pass
+
+
+class ProspectStatusUpdate(BaseModel):
+    model_config = CamelModel
+
+    status: str
+
+
+class ProspectSmsRequest(BaseModel):
+    model_config = CamelModel
+
+    message: str
+
+
+class ProspectBulkSmsItem(BaseModel):
+    model_config = CamelModel
+
+    id: str
+    message: str
+
+
+class ProspectBulkSmsRequest(BaseModel):
+    model_config = CamelModel
+
+    items: list[ProspectBulkSmsItem]
+
+
+class ProspectBulkSmsFailure(BaseModel):
+    model_config = CamelModel
+
+    id: str
+    name: str
+    reason: str
+
+
+class ProspectOut(ProspectBase):
+    id: str
+    status: str
+    last_relance_at: datetime | None = None
+    converted_client_id: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ProspectBulkSmsResponse(BaseModel):
+    model_config = CamelModel
+
+    sent: list[ProspectOut]
+    failed: list[ProspectBulkSmsFailure]
+
+
+class ProspectBulkItem(BaseModel):
+    model_config = CamelModel
+
+    name: str
+    phone: str
+    prospected_date: str
+    source: str | None = None
+    wave: str | None = None
+    civility: str | None = None
+    notes: str | None = None
+
+
+class ProspectBulkCreate(BaseModel):
+    model_config = CamelModel
+
+    items: list[ProspectBulkItem]
+
+
+class CampaignMediaOut(BaseModel):
+    model_config = CamelModel
+
+    kind: str
+    content_type: str
+    filename: str
+    updated_at: datetime
+
+
+class ProspectConvertedUpdate(BaseModel):
+    model_config = CamelModel
+
+    client_id: str

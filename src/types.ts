@@ -1,4 +1,4 @@
-export type NavScreen = 'overview' | 'customers' | 'services' | 'automations' | 'schedule' | 'analytics' | 'reviews' | 'appointments';
+export type NavScreen = 'overview' | 'customers' | 'services' | 'automations' | 'schedule' | 'analytics' | 'reviews' | 'appointments' | 'prospects';
 
 export type Gender = 'F' | 'M';
 
@@ -103,6 +103,25 @@ export interface Appointment {
   createdAt: string;
 }
 
+export type ProspectStatus = 'new' | 'contacted' | 'converted' | 'not_interested';
+export type ProspectCivility = 'M.' | 'Mme';
+
+export interface Prospect {
+  id: string;
+  name: string;
+  phone: string;
+  prospectedDate: string; // ISO "YYYY-MM-DD"
+  source: string | null;
+  wave: string | null;
+  civility: ProspectCivility | null;
+  notes: string | null;
+  status: ProspectStatus;
+  lastRelanceAt: string | null;
+  convertedClientId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AvailabilityRule {
   weekday: number;
   isClosed: boolean;
@@ -152,5 +171,6 @@ export interface ToastMessage {
   type: 'success' | 'info' | 'warning';
   title: string;
   description?: string;
+  action?: { label: string; onClick: () => void };
 }
 

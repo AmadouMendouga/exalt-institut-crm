@@ -654,18 +654,18 @@ export const INITIAL_MESSAGE_TEMPLATES: MessageTemplate[] = [
     channel: 'WhatsApp',
     content: {
       fr: [
-        `Bonjour 👋 Mme/M. *[Nom]*,\n\nNous espérons que vous allez merveilleusement bien et que vous passez une belle semaine.\n\nToute l'équipe pensait à vous et avait simplement envie de prendre de vos nouvelles.\n\nQue ce soit pour un moment de détente ou juste pour échanger un sourire, notre porte vous est toujours grande ouverte.\n\nAu plaisir de vous lire ou de vous croiser bientôt,\n_L'équipe Exalt_ ✨`,
-        `Bonjour 👋 Mme/M. *[Nom]*,\n\nNous espérons que tout va bien pour vous. Cela nous ferait très plaisir d'avoir de vos nouvelles.\n\nSi l'envie d'un moment rien que pour vous se fait sentir, sachez que nous sommes toujours là.\n\nBelle journée à vous,\n_L'équipe Exalt_ ✨`,
-        `Bonjour 👋 Mme/M. *[Nom]*,\n\nToute l'équipe Exalt pense à vous aujourd'hui et espère que vous allez bien.\n\nNous serions ravis de vous accueillir prochainement, ne serait-ce que pour un instant de détente.\n\nPrenez soin de vous,\n_L'équipe Exalt_ ✨`,
-        `Bonjour 👋 Mme/M. *[Nom]*,\n\nNous espérons sincèrement que vous allez bien. Un petit mot simplement pour vous souhaiter une très belle journée et vous dire que nous pensons à vous.\n\nNotre équipe reste à votre disposition, quand vous le souhaiterez.\n\nAvec toute notre bienveillance,\n_L'équipe Exalt_ ✨`,
-        `Bonjour 👋 Mme/M. *[Nom]*,\n\nNous espérons que vous allez bien et que la journée se passe doucement pour vous.\n\nToute l'équipe Exalt vous envoie de bonnes ondes et espère avoir le plaisir de vous revoir bientôt.\n\nBelle journée,\n_L'équipe Exalt_ ✨`
+        `Bonjour 👋 Mme/M. *[Nom]*,\n\nNous espérons que vous allez bien et que votre semaine se déroule dans la douceur.\n\nCela fait un moment que nous n'avons pas eu le plaisir de vous accueillir, et toute l'équipe pensait justement à vous : nous voulions simplement prendre de vos nouvelles, sans arrière-pensée.\n\nSi l'envie d'un moment rien que pour vous se présente, sachez que notre porte vous est toujours grande ouverte, à votre rythme.\n\nBelle journée à vous,\n_L'équipe Exalt_ ✨`,
+        `Bonjour 👋 Mme/M. *[Nom]*,\n\nUn petit mot, sans autre raison que le plaisir de prendre de vos nouvelles.\n\nNous espérons sincèrement que vous allez bien, et que la vie vous sourit ces derniers temps. Si un jour vous avez envie d'un instant rien que pour vous, notre équipe sera ravie de vous recevoir.\n\nEn attendant, prenez soin de vous,\n_L'équipe Exalt_ ✨`,
+        `Bonjour 👋 Mme/M. *[Nom]*,\n\nToute l'équipe Exalt pense à vous et espère que tout va bien de votre côté.\n\nPas de promotion ni de rendez-vous à caser dans ce message, juste l'envie sincère de savoir comment vous allez. N'hésitez pas à nous répondre, même simplement pour dire bonjour.\n\nAvec toute notre bienveillance,\n_L'équipe Exalt_ ✨`,
+        `Bonjour 👋 Mme/M. *[Nom]*,\n\nNous espérons que vous allez bien. Cela fait un moment que nos chemins ne se sont pas croisés, et vous nous manquez un peu.\n\nNous serions ravis d'avoir de vos nouvelles, ou de vous accueillir à nouveau quand cela vous conviendra, sans aucune pression.\n\nBien à vous,\n_L'équipe Exalt_ ✨`,
+        `Bonjour 👋 Mme/M. *[Nom]*,\n\nNous espérons que vous allez bien et que tout se passe doucement pour vous.\n\nToute l'équipe Exalt vous envoie de bonnes ondes aujourd'hui, avec l'espoir sincère d'avoir bientôt le plaisir de vous relire ou de vous revoir.\n\nPrenez soin de vous,\n_L'équipe Exalt_ ✨`
       ],
       en: [
-        `Hello 👋 Mr/Ms *[Nom]*,\n\nWe hope you are doing wonderfully well and having a lovely week.\n\nThe whole team was thinking of you and simply wanted to check in.\n\nWhether for a moment of relaxation or just to share a smile, our door is always wide open.\n\nLooking forward to hearing from you or seeing you soon,\n_The Exalt Team_ ✨`,
-        `Hello 👋 Mr/Ms *[Nom]*,\n\nWe hope everything is going well for you. It would mean a lot to hear how you're doing.\n\nIf you ever feel like a little moment just for yourself, know that we're always here.\n\nHave a wonderful day,\n_The Exalt Team_ ✨`,
-        `Hello 👋 Mr/Ms *[Nom]*,\n\nThe whole Exalt team is thinking of you today and hopes you are well.\n\nWe would love to welcome you again soon, even just for a moment of relaxation.\n\nTake care of yourself,\n_The Exalt Team_ ✨`,
-        `Hello 👋 Mr/Ms *[Nom]*,\n\nWe sincerely hope you are doing well. Just a quick note to wish you a wonderful day and let you know we're thinking of you.\n\nOur team remains available whenever you'd like.\n\nWith our warmest thoughts,\n_The Exalt Team_ ✨`,
-        `Hello 👋 Mr/Ms *[Nom]*,\n\nWe hope you are doing well and that your day is going gently.\n\nThe whole Exalt team is sending good thoughts your way and hopes to see you again soon.\n\nHave a wonderful day,\n_The Exalt Team_ ✨`
+        `Hello 👋 Mr/Ms *[Nom]*,\n\nWe hope you are doing well and that your week is off to a gentle start.\n\nIt has been a while since we last had the pleasure of welcoming you, and the whole team was thinking of you today: we simply wanted to check in, with nothing else in mind.\n\nIf you ever feel like a moment just for yourself, know that our door is always wide open, whenever suits you.\n\nHave a wonderful day,\n_The Exalt Team_ ✨`,
+        `Hello 👋 Mr/Ms *[Nom]*,\n\nJust a short note, for no other reason than the pleasure of checking in.\n\nWe sincerely hope you are doing well, and that life has been treating you kindly lately. If you ever feel like a moment for yourself, our team would be delighted to welcome you.\n\nUntil then, take good care of yourself,\n_The Exalt Team_ ✨`,
+        `Hello 👋 Mr/Ms *[Nom]*,\n\nThe whole Exalt team is thinking of you and hopes everything is going well on your end.\n\nNo offer to squeeze in and no appointment to book here, just a genuine wish to know how you're doing. Feel free to write back, even just to say hello.\n\nWith our warmest thoughts,\n_The Exalt Team_ ✨`,
+        `Hello 👋 Mr/Ms *[Nom]*,\n\nWe hope you are doing well. It has been a while since our paths last crossed, and we've missed you a little.\n\nWe would love to hear how you're doing, or to welcome you back whenever it suits you, with absolutely no pressure.\n\nKind regards,\n_The Exalt Team_ ✨`,
+        `Hello 👋 Mr/Ms *[Nom]*,\n\nWe hope you are doing well and that things are unfolding gently for you.\n\nThe whole Exalt team is sending good thoughts your way today, with the sincere hope of hearing from you or seeing you again soon.\n\nTake care of yourself,\n_The Exalt Team_ ✨`
       ]
     },
     ctaText: {
@@ -687,18 +687,18 @@ export const INITIAL_MESSAGE_TEMPLATES: MessageTemplate[] = [
     channel: 'SMS',
     content: {
       fr: [
-        `Bonjour 👋 [Nom], toute l'équipe Exalt Institut pense à vous et espère que vous allez bien. Belle journée à vous !`,
-        `Exalt Institut : [Nom], nous espérons que vous allez bien. Un petit mot pour prendre de vos nouvelles et vous souhaiter une belle journée.`,
-        `Bonjour 👋 [Nom], nous pensions à vous aujourd'hui. Notre porte vous est toujours ouverte pour un moment de détente. Belle journée !`,
-        `Exalt Institut vous souhaite une très belle journée, [Nom] ! Toute l'équipe pense à vous.`,
-        `Bonjour 👋 [Nom], nous espérons que tout va bien pour vous. Prenez soin de vous, l'équipe Exalt Institut.`
+        `Bonjour 👋 [Nom], toute l'équipe Exalt pense à vous et espère que vous allez bien. Aucune raison particulière, juste l'envie de prendre de vos nouvelles. Belle journée !`,
+        `Bonjour 👋 [Nom], un petit mot sans autre but que de vous souhaiter une belle journée. Nous espérons que vous allez bien. L'équipe Exalt Institut.`,
+        `Exalt Institut : [Nom], nous pensions à vous aujourd'hui et espérons que tout va bien. Prenez soin de vous !`,
+        `Bonjour 👋 [Nom], ça fait un moment ! Nous espérons que vous allez bien, sans autre intention que de prendre de vos nouvelles. Belle journée à vous.`,
+        `Exalt Institut vous envoie de bonnes ondes, [Nom]. Nous espérons que vous allez bien. Prenez soin de vous !`
       ],
       en: [
-        `Hello 👋 [Nom], the whole Exalt Institute team is thinking of you and hopes you're well. Have a wonderful day!`,
-        `Exalt Institute: [Nom], we hope you're doing well. Just a quick note to check in and wish you a great day.`,
-        `Hello 👋 [Nom], we were thinking of you today. Our door is always open for a moment of relaxation. Have a great day!`,
-        `Exalt Institute wishes you a wonderful day, [Nom]! The whole team is thinking of you.`,
-        `Hello 👋 [Nom], we hope everything is going well for you. Take care, from the Exalt Institute team.`
+        `Hello 👋 [Nom], the whole Exalt team is thinking of you and hopes you're well. No particular reason, just wanted to check in. Have a great day!`,
+        `Hello 👋 [Nom], just a quick note to wish you a lovely day, no other reason. We hope you're doing well. The Exalt Institute team.`,
+        `Exalt Institute: [Nom], we were thinking of you today and hope all is well. Take care!`,
+        `Hello 👋 [Nom], it's been a while! We hope you're doing well, simply wanted to check in. Have a wonderful day.`,
+        `Exalt Institute is sending good thoughts your way, [Nom]. We hope you're well. Take care!`
       ]
     },
     ctaText: {
@@ -724,18 +724,18 @@ export const INITIAL_MESSAGE_TEMPLATES: MessageTemplate[] = [
     },
     content: {
       fr: [
-        `Bonjour 👋 Mme/M. [Nom],\n\nNous espérons que vous allez merveilleusement bien et que vous passez une excellente semaine.\n\nToute l'équipe Exalt Institut pensait à vous et avait simplement envie de prendre de vos nouvelles.\n\nQue ce soit pour un moment de détente ou juste pour échanger quelques mots, sachez que notre porte vous est toujours grande ouverte.\n\nAu plaisir de vous lire ou de vous accueillir très bientôt,\nL'équipe Exalt ✨`,
-        `Bonjour 👋 Mme/M. [Nom],\n\nNous espérons que tout va bien pour vous. Cela nous ferait très plaisir d'avoir de vos nouvelles, même simplement en quelques mots.\n\nNotre équipe reste à votre disposition dès que l'envie d'un moment pour vous se présentera.\n\nBelle journée à vous,\nL'équipe Exalt ✨`,
-        `Bonjour 👋 Mme/M. [Nom],\n\nToute l'équipe Exalt Institut pense à vous et espère que vous allez bien.\n\nNous serions ravis de vous accueillir prochainement, ne serait-ce que pour un instant de détente bien mérité.\n\nPrenez soin de vous,\nL'équipe Exalt ✨`,
-        `Bonjour 👋 Mme/M. [Nom],\n\nUn simple mot pour vous souhaiter une très belle journée et vous dire que nous pensons à vous.\n\nNotre équipe reste disponible, quand vous le souhaiterez, pour vous accueillir à nouveau.\n\nAvec toute notre bienveillance,\nL'équipe Exalt ✨`,
-        `Bonjour 👋 Mme/M. [Nom],\n\nNous espérons que vous allez bien et que la période se passe doucement pour vous.\n\nToute l'équipe Exalt Institut vous envoie de bonnes ondes et espère avoir le plaisir de vous revoir bientôt.\n\nBelle journée,\nL'équipe Exalt ✨`
+        `Bonjour 👋 Mme/M. [Nom],\n\nNous espérons que vous allez bien et que votre semaine se déroule dans la douceur.\n\nCela fait un moment que nous n'avons pas eu le plaisir de vous accueillir, et toute l'équipe pensait justement à vous : nous voulions simplement prendre de vos nouvelles, sans arrière-pensée.\n\nSi l'envie d'un moment rien que pour vous se présente, sachez que notre porte vous est toujours grande ouverte, à votre rythme.\n\nBelle journée à vous,\nL'équipe Exalt ✨`,
+        `Bonjour 👋 Mme/M. [Nom],\n\nUn petit mot, sans autre raison que le plaisir de prendre de vos nouvelles.\n\nNous espérons sincèrement que vous allez bien, et que la vie vous sourit ces derniers temps. Si un jour vous avez envie d'un instant rien que pour vous, notre équipe sera ravie de vous recevoir.\n\nEn attendant, prenez soin de vous,\nL'équipe Exalt ✨`,
+        `Bonjour 👋 Mme/M. [Nom],\n\nToute l'équipe Exalt pense à vous et espère que tout va bien de votre côté.\n\nPas de promotion ni de rendez-vous à caser dans ce message, juste l'envie sincère de savoir comment vous allez. N'hésitez pas à nous répondre, même simplement pour dire bonjour.\n\nAvec toute notre bienveillance,\nL'équipe Exalt ✨`,
+        `Bonjour 👋 Mme/M. [Nom],\n\nNous espérons que vous allez bien. Cela fait un moment que nos chemins ne se sont pas croisés, et vous nous manquez un peu.\n\nNous serions ravis d'avoir de vos nouvelles, ou de vous accueillir à nouveau quand cela vous conviendra, sans aucune pression.\n\nBien à vous,\nL'équipe Exalt ✨`,
+        `Bonjour 👋 Mme/M. [Nom],\n\nNous espérons que vous allez bien et que tout se passe doucement pour vous.\n\nToute l'équipe Exalt vous envoie de bonnes ondes aujourd'hui, avec l'espoir sincère d'avoir bientôt le plaisir de vous relire ou de vous revoir.\n\nPrenez soin de vous,\nL'équipe Exalt ✨`
       ],
       en: [
-        `Dear [Nom],\n\nWe hope you are doing wonderfully well and having an excellent week.\n\nThe whole Exalt Institute team was thinking of you and simply wanted to check in.\n\nWhether for a moment of relaxation or just to exchange a few words, know that our door is always wide open.\n\nLooking forward to hearing from you or welcoming you very soon,\nThe Exalt Team ✨`,
-        `Dear [Nom],\n\nWe hope everything is going well for you. It would mean a lot to hear from you, even just a few words.\n\nOur team remains available whenever you feel like a moment for yourself.\n\nHave a wonderful day,\nThe Exalt Team ✨`,
-        `Dear [Nom],\n\nThe whole Exalt Institute team is thinking of you and hopes you are well.\n\nWe would love to welcome you again soon, even just for a well-deserved moment of relaxation.\n\nTake care of yourself,\nThe Exalt Team ✨`,
-        `Dear [Nom],\n\nJust a quick note to wish you a wonderful day and let you know we're thinking of you.\n\nOur team remains available whenever you'd like to visit us again.\n\nWith our warmest thoughts,\nThe Exalt Team ✨`,
-        `Dear [Nom],\n\nWe hope you are doing well and that things are going gently for you these days.\n\nThe whole Exalt Institute team is sending good thoughts your way and hopes to see you again soon.\n\nHave a wonderful day,\nThe Exalt Team ✨`
+        `Hello 👋 Mr/Ms [Nom],\n\nWe hope you are doing well and that your week is off to a gentle start.\n\nIt has been a while since we last had the pleasure of welcoming you, and the whole team was thinking of you today: we simply wanted to check in, with nothing else in mind.\n\nIf you ever feel like a moment just for yourself, know that our door is always wide open, whenever suits you.\n\nHave a wonderful day,\nThe Exalt Team ✨`,
+        `Hello 👋 Mr/Ms [Nom],\n\nJust a short note, for no other reason than the pleasure of checking in.\n\nWe sincerely hope you are doing well, and that life has been treating you kindly lately. If you ever feel like a moment for yourself, our team would be delighted to welcome you.\n\nUntil then, take good care of yourself,\nThe Exalt Team ✨`,
+        `Hello 👋 Mr/Ms [Nom],\n\nThe whole Exalt team is thinking of you and hopes everything is going well on your end.\n\nNo offer to squeeze in and no appointment to book here, just a genuine wish to know how you're doing. Feel free to write back, even just to say hello.\n\nWith our warmest thoughts,\nThe Exalt Team ✨`,
+        `Hello 👋 Mr/Ms [Nom],\n\nWe hope you are doing well. It has been a while since our paths last crossed, and we've missed you a little.\n\nWe would love to hear how you're doing, or to welcome you back whenever it suits you, with absolutely no pressure.\n\nKind regards,\nThe Exalt Team ✨`,
+        `Hello 👋 Mr/Ms [Nom],\n\nWe hope you are doing well and that things are unfolding gently for you.\n\nThe whole Exalt team is sending good thoughts your way today, with the sincere hope of hearing from you or seeing you again soon.\n\nTake care of yourself,\nThe Exalt Team ✨`
       ]
     },
     ctaText: {

@@ -154,6 +154,52 @@ class Review(Base):
         return f"{self.client.prefix} {self.client.name}" if self.client else None
 
 
+class Prospect(Base):
+    """Contact prospecté (flyers, porte-à-porte...) pas encore client : suivi séparé
+    des vrais clients tant qu'aucune prestation n'a été réalisée."""
+
+    __tablename__ = "prospects"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String)
+    phone: Mapped[str] = mapped_column(String)
+    prospected_date: Mapped[str] = mapped_column(String)  # "YYYY-MM-DD"
+    source: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Étiquette de lot d'import ("Vague 1", "Vague 2"...) choisie par l'institut à
+    # chaque nouvel import, distincte de `source` (qui décrit la méthode de collecte).
+    wave: Mapped[str | None] = mapped_column(String, nullable=True)
+    # "M." / "Mme", laissé vide quand le genre n'est pas connu avec certitude (les
+    # commerciaux ne le notent pas sur le terrain) — le message garde alors le
+    # prénom seul plutôt que de risquer un mauvais accord.
+    civility: Mapped[str | None] = mapped_column(String, nullable=True)
+    notes: Mapped[str | None] = mapped_column(String, nullable=True)
+    # new -> contacted -> converted, ou not_interested à tout moment
+    status: Mapped[str] = mapped_column(String, default="new")
+    last_relance_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    converted_client_id: Mapped[str | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
+
+    converted_client: Mapped[Client | None] = relationship()
+
+
+class CampaignMedia(Base):
+    """Photo ou vidéo de campagne (ex. photo de l'institut) qu'on veut pouvoir joindre
+    à une relance. WhatsApp (wa.me) ne permet pas de pré-joindre un fichier via un
+    lien : ce média reste téléchargeable pour un ajout manuel dans la conversation."""
+
+    __tablename__ = "campaign_media"
+    __table_args__ = (UniqueConstraint("kind", name="uq_campaign_media_kind"),)
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    kind: Mapped[str] = mapped_column(String)  # "photo" | "video"
+    data: Mapped[bytes] = mapped_column(LargeBinary)
+    content_type: Mapped[str] = mapped_column(String)
+    filename: Mapped[str] = mapped_column(String)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+    updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)
+
+
 class AvailabilityRule(Base):
     """Horaires d'ouverture hebdomadaires servant à calculer les créneaux libres sur /rdv."""
 

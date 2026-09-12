@@ -12,6 +12,9 @@ interface AddClientModalProps {
   onSave: (client: Client) => Promise<void>;
   editingClient?: Client | null;
   services: Service[];
+  /** Préremplit le formulaire d'un nouveau client (ex. conversion d'un prospect),
+   * sans passer par le mode édition (pas d'id existant à réutiliser). */
+  prefill?: { name?: string; phone?: string };
 }
 
 // La date de naissance ne sert qu'à déclencher la relance d'anniversaire chaque
@@ -38,7 +41,8 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
   onClose,
   onSave,
   editingClient,
-  services
+  services,
+  prefill
 }) => {
   const { language, t } = useLanguage();
 
@@ -82,11 +86,11 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
       setNextReminderDate(editingClient.nextReminderDate || '');
       setNextReminderNote(editingClient.nextReminderNote || '');
     } else {
-      setName('');
+      setName(prefill?.name || '');
       setPrefix('Mme.');
       setGender('F');
       setEmail('');
-      setPhone('+237 6 ');
+      setPhone(prefill?.phone || '+237 6 ');
       setPreferredChannel('WhatsApp');
       setLastService(language === 'fr' ? 'Soin Signature' : 'Signature Treatment');
       setSuggestedUpsell(language === 'fr' ? 'Soin Protecteur' : 'Protective Treatment');
@@ -97,7 +101,7 @@ export const AddClientModal: React.FC<AddClientModalProps> = ({
       setNextReminderDate('');
       setNextReminderNote('');
     }
-  }, [isOpen, editingClient, language]);
+  }, [isOpen, editingClient, language, prefill]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -10,7 +10,10 @@ import {
   Review,
   Appointment,
   AppointmentStatus,
-  AvailabilityRule
+  AvailabilityRule,
+  Prospect,
+  ProspectStatus,
+  ProspectCivility
 } from './types';
 import { apiGet, apiPost, apiPatch, apiPut, apiDelete, apiUpload } from './api/client';
 import { Sidebar } from './components/Sidebar';
@@ -20,6 +23,11 @@ import { CustomersScreen } from './components/CustomersScreen';
 import { ServicesScreen } from './components/ServicesScreen';
 import { ReviewsScreen } from './components/ReviewsScreen';
 import { AppointmentsScreen } from './components/AppointmentsScreen';
+import { ProspectsScreen } from './components/ProspectsScreen';
+import { BulkProspectRelanceModal } from './components/BulkProspectRelanceModal';
+import { AddProspectModal } from './components/AddProspectModal';
+import { ProspectRelanceModal, ProspectRelanceChannel } from './components/ProspectRelanceModal';
+import { CampaignMediaItem } from './components/CampaignMediaPanel';
 import { AutomationsScreen } from './components/AutomationsScreen';
 import { ScheduleScreen } from './components/ScheduleScreen';
 import { AnalyticsScreen } from './components/AnalyticsScreen';
@@ -48,6 +56,8 @@ export default function App() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [availability, setAvailability] = useState<AvailabilityRule[]>([]);
+  const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [campaignMedia, setCampaignMedia] = useState<Partial<Record<'photo' | 'video', CampaignMediaItem>>>({});
   const [campaigns, setCampaigns] = useState<AutomationCampaign[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -63,6 +73,9 @@ export default function App() {
   const [bulkRelanceClients, setBulkRelanceClients] = useState<Client[]>([]);
   const [isBulkRelanceOpen, setIsBulkRelanceOpen] = useState(false);
 
+  const [bulkRelanceProspects, setBulkRelanceProspects] = useState<Prospect[]>([]);
+  const [isBulkProspectRelanceOpen, setIsBulkProspectRelanceOpen] = useState(false);
+
   const [isNewAutomationOpen, setIsNewAutomationOpen] = useState(false);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -72,13 +85,27 @@ export default function App() {
   const [detailClient, setDetailClient] = useState<Client | null>(null);
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
 
-  // Toast trigger helper
-  const addToast = (type: 'success' | 'info' | 'warning', title: string, description?: string) => {
+  const [isAddProspectOpen, setIsAddProspectOpen] = useState(false);
+  const [relanceProspect, setRelanceProspect] = useState<Prospect | null>(null);
+  const [isProspectRelanceOpen, setIsProspectRelanceOpen] = useState(false);
+  // Suivi de la conversion en cours : quand un client est créé pendant que ceci
+  // est renseigné, on relie ce client au prospect d'origine juste après.
+  const [convertingProspectId, setConvertingProspectId] = useState<string | null>(null);
+  const [clientPrefill, setClientPrefill] = useState<{ name?: string; phone?: string } | undefined>(undefined);
+
+  // Toast trigger helper — un toast avec `action` (ex. Annuler) reste affiché plus
+  // longtemps pour laisser le temps de cliquer dessus.
+  const addToast = (
+    type: 'success' | 'info' | 'warning',
+    title: string,
+    description?: string,
+    action?: { label: string; onClick: () => void }
+  ) => {
     const id = `toast-${Date.now()}`;
-    setToasts((prev) => [...prev, { id, type, title, description }]);
+    setToasts((prev) => [...prev, { id, type, title, description, action }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4500);
+    }, action ? 8000 : 4500);
   };
 
   const dismissToast = (id: string) => {
@@ -103,8 +130,10 @@ export default function App() {
       apiGet<Review[]>('/api/reviews'),
       apiGet<Appointment[]>('/api/appointments'),
       apiGet<AvailabilityRule[]>('/api/availability'),
+      apiGet<Prospect[]>('/api/prospects'),
+      apiGet<CampaignMediaItem[]>('/api/campaign-media'),
     ])
-      .then(([clientsData, servicesData, campaignsData, timelineData, reviewsData, appointmentsData, availabilityData]) => {
+      .then(([clientsData, servicesData, campaignsData, timelineData, reviewsData, appointmentsData, availabilityData, prospectsData, campaignMediaData]) => {
         if (cancelled) return;
         setClients(clientsData);
         setServices(servicesData);
@@ -113,6 +142,10 @@ export default function App() {
         setReviews(reviewsData);
         setAppointments(appointmentsData);
         setAvailability(availabilityData);
+        setProspects(prospectsData);
+        setCampaignMedia(
+          Object.fromEntries(campaignMediaData.map((m) => [m.kind, m])) as Partial<Record<'photo' | 'video', CampaignMediaItem>>
+        );
       })
       .catch(reportError)
       .finally(() => {
@@ -226,10 +259,158 @@ export default function App() {
             ? `${created.prefix} ${created.name} a été ajouté à la base de données.`
             : `${created.prefix} ${created.name} has been added to the customer database.`
         );
+
+        if (convertingProspectId) {
+          try {
+            const updatedProspect = await apiPatch<Prospect>(`/api/prospects/${convertingProspectId}/converted`, {
+              clientId: created.id
+            });
+            setProspects((prev) => prev.map((p) => (p.id === updatedProspect.id ? updatedProspect : p)));
+            addToast('success', t.prospectConverted, `${created.prefix} ${created.name}`);
+          } catch (err) {
+            reportError(err);
+          } finally {
+            setConvertingProspectId(null);
+            setClientPrefill(undefined);
+          }
+        }
       }
     } catch (err) {
       reportError(err);
       throw err;
+    }
+  };
+
+  // Prospects
+  const handleAddProspect = async (data: { name: string; phone: string; prospectedDate: string; source: string | null; wave: string | null; civility: ProspectCivility | null; notes: string | null }) => {
+    try {
+      const created = await apiPost<Prospect>('/api/prospects', data);
+      setProspects((prev) => [created, ...prev]);
+      addToast('success', t.prospectCreated, created.name);
+    } catch (err) {
+      reportError(err);
+      throw err;
+    }
+  };
+
+  const handleOpenProspectRelance = (prospect: Prospect) => {
+    setRelanceProspect(prospect);
+    setIsProspectRelanceOpen(true);
+  };
+
+  const handleUploadCampaignMedia = async (kind: 'photo' | 'video', file: File) => {
+    try {
+      const updated = await apiUpload<CampaignMediaItem>(`/api/campaign-media/${kind}`, file);
+      setCampaignMedia((prev) => ({ ...prev, [kind]: updated }));
+    } catch (err) {
+      reportError(err);
+    }
+  };
+
+  const handleDeleteCampaignMedia = async (kind: 'photo' | 'video') => {
+    try {
+      await apiDelete(`/api/campaign-media/${kind}`);
+      setCampaignMedia((prev) => {
+        const next = { ...prev };
+        delete next[kind];
+        return next;
+      });
+    } catch (err) {
+      reportError(err);
+    }
+  };
+
+  const handleOpenBulkProspectRelance = (selected: Prospect[]) => {
+    setBulkRelanceProspects(selected);
+    setIsBulkProspectRelanceOpen(true);
+  };
+
+  const handleSendProspectRelance = async (prospect: Prospect, message: string, channel: ProspectRelanceChannel) => {
+    try {
+      const updated =
+        channel === 'SMS'
+          ? await apiPost<Prospect>(`/api/prospects/${prospect.id}/send-sms`, { message })
+          : await apiPatch<Prospect>(`/api/prospects/${prospect.id}/status`, { status: 'contacted' });
+      setProspects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      addToast(
+        'success',
+        language === 'fr' ? `Relance ${channel} envoyée` : `${channel} follow-up sent`,
+        `${prospect.name} • ${prospect.phone}`
+      );
+    } catch (err) {
+      reportError(err);
+    }
+  };
+
+  const handleBulkSendProspectSms = async (items: { id: string; message: string }[]) => {
+    try {
+      const result = await apiPost<{ sent: Prospect[]; failed: { id: string; name: string; reason: string }[] }>(
+        '/api/prospects/bulk/send-sms',
+        { items }
+      );
+      setProspects((prev) => {
+        const sentMap = new Map(result.sent.map((p) => [p.id, p]));
+        return prev.map((p) => sentMap.get(p.id) ?? p);
+      });
+      addToast(
+        'success',
+        language === 'fr' ? 'Envoi SMS groupé terminé' : 'Bulk SMS send complete',
+        language === 'fr'
+          ? `${result.sent.length} envoyés${result.failed.length ? `, ${result.failed.length} échoués` : ''}.`
+          : `${result.sent.length} sent${result.failed.length ? `, ${result.failed.length} failed` : ''}.`
+      );
+      return { sentCount: result.sent.length, failedCount: result.failed.length };
+    } catch (err) {
+      reportError(err);
+      return { sentCount: 0, failedCount: items.length };
+    }
+  };
+
+  const handleConvertProspect = (prospect: Prospect) => {
+    setEditingClient(null);
+    setClientPrefill({ name: prospect.name, phone: prospect.phone });
+    setConvertingProspectId(prospect.id);
+    setIsAddClientOpen(true);
+  };
+
+  const handleUpdateProspectStatus = async (prospect: Prospect, status: ProspectStatus) => {
+    try {
+      const updated = await apiPatch<Prospect>(`/api/prospects/${prospect.id}/status`, { status });
+      setProspects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      addToast('info', t.prospectStatusUpdated, prospect.name);
+    } catch (err) {
+      reportError(err);
+    }
+  };
+
+  // Suppression réellement effectuée tout de suite (pas de perte de données si l'onglet
+  // se ferme), mais on garde les infos du prospect pour pouvoir le recréer à l'identique
+  // si "Annuler" est cliqué depuis le toast.
+  const handleDeleteProspect = async (prospect: Prospect) => {
+    try {
+      await apiDelete(`/api/prospects/${prospect.id}`);
+      setProspects((prev) => prev.filter((p) => p.id !== prospect.id));
+      addToast('info', t.prospectDeleted, prospect.name, {
+        label: t.undoBtn,
+        onClick: async () => {
+          try {
+            const restored = await apiPost<Prospect>('/api/prospects', {
+              name: prospect.name,
+              phone: prospect.phone,
+              prospectedDate: prospect.prospectedDate,
+              source: prospect.source,
+              wave: prospect.wave,
+              civility: prospect.civility,
+              notes: prospect.notes
+            });
+            setProspects((prev) => [restored, ...prev]);
+          } catch (err) {
+            reportError(err);
+          }
+        }
+      });
+    } catch (err) {
+      reportError(err);
     }
   };
 
@@ -478,6 +659,7 @@ export default function App() {
               onQuickRelance={handleOpenQuickRelance}
               onOpenAddClient={() => {
                 setEditingClient(null);
+                setClientPrefill(undefined);
                 setIsAddClientOpen(true);
               }}
               onSelectClientDetail={(c) => {
@@ -485,6 +667,18 @@ export default function App() {
                 setIsDetailDrawerOpen(true);
               }}
               onBulkRelance={handleOpenBulkRelance}
+            />
+          )}
+
+          {currentScreen === 'prospects' && (
+            <ProspectsScreen
+              prospects={prospects}
+              onOpenAddProspect={() => setIsAddProspectOpen(true)}
+              onRelance={handleOpenProspectRelance}
+              onConvert={handleConvertProspect}
+              onMarkNotInterested={(p) => handleUpdateProspectStatus(p, 'not_interested')}
+              onDelete={handleDeleteProspect}
+              onBulkRelance={handleOpenBulkProspectRelance}
             />
           )}
 
@@ -588,10 +782,41 @@ export default function App() {
         onClose={() => {
           setIsAddClientOpen(false);
           setEditingClient(null);
+          setConvertingProspectId(null);
+          setClientPrefill(undefined);
         }}
         onSave={handleSaveClient}
         editingClient={editingClient}
         services={services}
+        prefill={clientPrefill}
+      />
+
+      <AddProspectModal
+        isOpen={isAddProspectOpen}
+        onClose={() => setIsAddProspectOpen(false)}
+        onSave={handleAddProspect}
+        defaultWave={[...prospects].sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0]?.wave || undefined}
+      />
+
+      <ProspectRelanceModal
+        isOpen={isProspectRelanceOpen}
+        prospect={relanceProspect}
+        onClose={() => setIsProspectRelanceOpen(false)}
+        onSend={handleSendProspectRelance}
+        campaignMedia={campaignMedia}
+        onUploadCampaignMedia={handleUploadCampaignMedia}
+        onDeleteCampaignMedia={handleDeleteCampaignMedia}
+      />
+
+      <BulkProspectRelanceModal
+        isOpen={isBulkProspectRelanceOpen}
+        prospects={bulkRelanceProspects}
+        onClose={() => setIsBulkProspectRelanceOpen(false)}
+        onSend={handleSendProspectRelance}
+        onBulkSendSms={handleBulkSendProspectSms}
+        campaignMedia={campaignMedia}
+        onUploadCampaignMedia={handleUploadCampaignMedia}
+        onDeleteCampaignMedia={handleDeleteCampaignMedia}
       />
 
       <AddServiceModal

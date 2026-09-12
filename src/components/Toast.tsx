@@ -41,6 +41,18 @@ export const Toast: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
                   {toast.description}
                 </p>
               )}
+              {toast.action && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.action?.onClick();
+                    onDismiss(toast.id);
+                  }}
+                  className="mt-1.5 text-[var(--surface-highlight)] font-semibold underline underline-offset-2 hover:text-white cursor-pointer"
+                >
+                  {toast.action.label}
+                </button>
+              )}
             </div>
 
             <button

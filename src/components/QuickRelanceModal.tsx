@@ -262,11 +262,11 @@ export const QuickRelanceModal: React.FC<QuickRelanceModalProps> = ({
                   <span>Email</span>
                 </button>
               </div>
-              {channel !== 'WhatsApp' && (
+              {channel === 'Email' && (
                 <p className="text-[11px] text-stone-400 dark:text-stone-500">
                   {language === 'fr'
-                    ? 'Ce canal est enregistré dans le CRM mais aucun envoi réel n\'est déclenché (pas de fournisseur email/SMS connecté).'
-                    : 'This channel is recorded in the CRM but no real dispatch is triggered (no email/SMS provider connected).'}
+                    ? 'Ce canal est enregistré dans le CRM mais aucun envoi réel n\'est déclenché (pas de fournisseur email connecté).'
+                    : 'This channel is recorded in the CRM but no real dispatch is triggered (no email provider connected).'}
                 </p>
               )}
             </div>

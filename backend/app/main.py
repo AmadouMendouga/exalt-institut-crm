@@ -12,7 +12,7 @@ from .config import ROOT_DIR, settings
 from .database import SessionLocal
 from .rdv_page import RDV_PAGE_HTML
 from .review_page import REVIEW_PAGE_HTML
-from .routers import appointments, auth, campaigns, clients, relances, reviews, services, timeline
+from .routers import appointments, auth, campaign_media, campaigns, clients, prospects, relances, reviews, services, timeline
 
 logger = logging.getLogger("app.automation")
 
@@ -44,6 +44,8 @@ app.include_router(services.router)
 app.include_router(services.public_router)
 app.include_router(reviews.router)
 app.include_router(appointments.router)
+app.include_router(prospects.router)
+app.include_router(campaign_media.router)
 
 
 @app.get("/avis", response_class=HTMLResponse, include_in_schema=False)

@@ -11,7 +11,8 @@ import {
   Sparkles,
   Globe,
   Star,
-  CalendarClock
+  CalendarClock,
+  Target
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { NavScreen } from '../types';
@@ -37,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'overview' as NavScreen, label: t.navOverview, icon: LayoutGrid },
     { id: 'customers' as NavScreen, label: t.navCustomers, icon: Users },
+    { id: 'prospects' as NavScreen, label: t.navProspects, icon: Target },
     { id: 'services' as NavScreen, label: t.navServices, icon: Sparkles },
     { id: 'automations' as NavScreen, label: t.navAutomations, icon: Bot },
     { id: 'schedule' as NavScreen, label: t.navSchedule, icon: Calendar },
