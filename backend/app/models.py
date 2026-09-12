@@ -231,3 +231,20 @@ class Appointment(Base):
     client_id: Mapped[str | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=_now)
     client: Mapped[Client | None] = relationship()
+
+
+class BirthdaySubmission(Base):
+    """Date d'anniversaire soumise depuis la page publique /anniversaire (à valider
+    par l'institut avant d'être reportée sur la fiche client, Client.birth_date)."""
+
+    __tablename__ = "birthday_submissions"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String)
+    phone: Mapped[str] = mapped_column(String)
+    birth_date: Mapped[str] = mapped_column(String)  # "MM-DD", même format que Client.birth_date
+    gender: Mapped[str] = mapped_column(String, default="F")  # "F" ou "M", choisi sur la page publique
+    status: Mapped[str] = mapped_column(String, default="Pending")
+    client_id: Mapped[str | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(default=_now)
+    client: Mapped[Client | None] = relationship()

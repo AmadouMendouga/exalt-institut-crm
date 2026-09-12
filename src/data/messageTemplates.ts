@@ -637,6 +637,39 @@ export const INITIAL_MESSAGE_TEMPLATES: MessageTemplate[] = [
     }
   },
 
+  // 6bis. Demande de date de naissance — pour les clients dont la fiche n'a pas
+  // encore de birthDate : renvoie vers /anniversaire (page publique), la
+  // validation de la réponse par un admin remplit ensuite Client.birthDate.
+  {
+    id: 'tpl-bdreq-wa',
+    relanceType: 'birthday_request',
+    title: {
+      fr: 'Demande de date de naissance WhatsApp',
+      en: 'Birthday info request WhatsApp'
+    },
+    category: {
+      fr: 'Anniversaire & Événement',
+      en: 'Birthday & Special Event'
+    },
+    channel: 'WhatsApp',
+    content: {
+      fr: [
+        `Bonjour Mme/M. *[Nom]* 😊,\n\nAfin de nous permettre de mieux vous accompagner et de vous réserver de petites attentions à l'occasion de votre anniversaire 🎂, nous vous invitons à bien vouloir remplir notre petit formulaire avec votre date d'anniversaire :\nhttps://exalt-beauty.up.railway.app/anniversaire\n\nMerci pour votre confiance et votre fidélité à notre institut. 🌸`,
+        `Bonjour Mme/M. *[Nom]* 😊,\n\nNous aimerions ne jamais manquer votre anniversaire ! Prenez un instant pour nous indiquer votre date de naissance ici :\nhttps://exalt-beauty.up.railway.app/anniversaire\n\nC'est promis, on vous prépare une petite surprise le moment venu 🎂🌸`,
+        `Bonjour Mme/M. *[Nom]* 😊,\n\nPetite question toute simple : quand est votre anniversaire ? Dites-le-nous en 30 secondes via ce lien :\nhttps://exalt-beauty.up.railway.app/anniversaire\n\nMerci pour votre fidélité à l'Institut Exalt 🌸`
+      ],
+      en: [
+        `Hello Mr/Ms *[Nom]* 😊,\n\nSo we can take even better care of you and prepare a little something for your birthday 🎂, please take a moment to share your birthday with us:\nhttps://exalt-beauty.up.railway.app/anniversaire\n\nThank you for your trust and loyalty to our institute. 🌸`,
+        `Hello Mr/Ms *[Nom]* 😊,\n\nWe'd hate to miss your birthday! Take a moment to let us know your birth date here:\nhttps://exalt-beauty.up.railway.app/anniversaire\n\nWe promise a little surprise when the day comes 🎂🌸`,
+        `Hello Mr/Ms *[Nom]* 😊,\n\nQuick question: when's your birthday? Let us know in 30 seconds via this link:\nhttps://exalt-beauty.up.railway.app/anniversaire\n\nThank you for your loyalty to Exalt Institut 🌸`
+      ]
+    },
+    ctaText: {
+      fr: 'Indiquer ma date de naissance',
+      en: 'Share my birthday'
+    }
+  },
+
   // 7. Prise de Nouvelles / Bonne Journée — message chaleureux sans offre,
   // pensé pour être envoyé à plusieurs clients en même temps (pas de référence
   // obligatoire à une prestation précise).

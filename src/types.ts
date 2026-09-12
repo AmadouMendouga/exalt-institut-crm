@@ -1,4 +1,4 @@
-export type NavScreen = 'overview' | 'customers' | 'services' | 'automations' | 'schedule' | 'analytics' | 'reviews' | 'appointments' | 'prospects';
+export type NavScreen = 'overview' | 'customers' | 'services' | 'automations' | 'schedule' | 'analytics' | 'reviews' | 'appointments' | 'prospects' | 'birthdaySubmissions';
 
 export type Gender = 'F' | 'M';
 
@@ -13,6 +13,7 @@ export type RelanceType =
   | 'periodic_reminder'
   | 'reengagement'
   | 'birthday'
+  | 'birthday_request'
   | 'checkin';
 
 export interface MessageTemplate {
@@ -120,6 +121,19 @@ export interface Prospect {
   convertedClientId: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export type BirthdaySubmissionStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export interface BirthdaySubmission {
+  id: string;
+  name: string;
+  phone: string;
+  birthDate: string; // "MM-DD"
+  gender: Gender;
+  status: BirthdaySubmissionStatus;
+  clientId: string | null;
+  createdAt: string;
 }
 
 export interface AvailabilityRule {

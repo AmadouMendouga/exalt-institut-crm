@@ -13,7 +13,9 @@ import {
   AvailabilityRule,
   Prospect,
   ProspectStatus,
-  ProspectCivility
+  ProspectCivility,
+  BirthdaySubmission,
+  BirthdaySubmissionStatus
 } from './types';
 import { apiGet, apiPost, apiPatch, apiPut, apiDelete, apiUpload } from './api/client';
 import { Sidebar } from './components/Sidebar';
@@ -28,6 +30,7 @@ import { BulkProspectRelanceModal } from './components/BulkProspectRelanceModal'
 import { AddProspectModal } from './components/AddProspectModal';
 import { ProspectRelanceModal, ProspectRelanceChannel } from './components/ProspectRelanceModal';
 import { CampaignMediaItem } from './components/CampaignMediaPanel';
+import { BirthdaySubmissionsScreen } from './components/BirthdaySubmissionsScreen';
 import { AutomationsScreen } from './components/AutomationsScreen';
 import { ScheduleScreen } from './components/ScheduleScreen';
 import { AnalyticsScreen } from './components/AnalyticsScreen';
@@ -55,6 +58,7 @@ export default function App() {
   const [services, setServices] = useState<Service[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [birthdaySubmissions, setBirthdaySubmissions] = useState<BirthdaySubmission[]>([]);
   const [availability, setAvailability] = useState<AvailabilityRule[]>([]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [campaignMedia, setCampaignMedia] = useState<Partial<Record<'photo' | 'video', CampaignMediaItem>>>({});
@@ -132,8 +136,9 @@ export default function App() {
       apiGet<AvailabilityRule[]>('/api/availability'),
       apiGet<Prospect[]>('/api/prospects'),
       apiGet<CampaignMediaItem[]>('/api/campaign-media'),
+      apiGet<BirthdaySubmission[]>('/api/birthday-submissions'),
     ])
-      .then(([clientsData, servicesData, campaignsData, timelineData, reviewsData, appointmentsData, availabilityData, prospectsData, campaignMediaData]) => {
+      .then(([clientsData, servicesData, campaignsData, timelineData, reviewsData, appointmentsData, availabilityData, prospectsData, campaignMediaData, birthdaySubmissionsData]) => {
         if (cancelled) return;
         setClients(clientsData);
         setServices(servicesData);
@@ -146,6 +151,7 @@ export default function App() {
         setCampaignMedia(
           Object.fromEntries(campaignMediaData.map((m) => [m.kind, m])) as Partial<Record<'photo' | 'video', CampaignMediaItem>>
         );
+        setBirthdaySubmissions(birthdaySubmissionsData);
       })
       .catch(reportError)
       .finally(() => {
@@ -484,6 +490,36 @@ export default function App() {
     }
   };
 
+  const handleUpdateBirthdaySubmissionStatus = async (submission: BirthdaySubmission, status: BirthdaySubmissionStatus) => {
+    try {
+      const result = await apiPatch<{ submission: BirthdaySubmission; client: Client | null }>(
+        `/api/birthday-submissions/${submission.id}/status`,
+        { status }
+      );
+      setBirthdaySubmissions((prev) => prev.map((s) => (s.id === submission.id ? result.submission : s)));
+      if (result.client) {
+        setClients((prev) => {
+          const exists = prev.some((c) => c.id === result.client!.id);
+          return exists ? prev.map((c) => (c.id === result.client!.id ? result.client! : c)) : [...prev, result.client!];
+        });
+      }
+      addToast('success', t.birthdaySubmissionStatusUpdated, submission.name);
+    } catch (err) {
+      reportError(err);
+    }
+  };
+
+  const handleDeleteBirthdaySubmission = async (submission: BirthdaySubmission) => {
+    if (!window.confirm(t.reviewsDeleteConfirm)) return;
+    try {
+      await apiDelete(`/api/birthday-submissions/${submission.id}`);
+      setBirthdaySubmissions((prev) => prev.filter((s) => s.id !== submission.id));
+      addToast('info', t.birthdaySubmissionDeleted);
+    } catch (err) {
+      reportError(err);
+    }
+  };
+
   const handleSaveAvailability = async (rules: AvailabilityRule[]) => {
     try {
       const updated = await apiPut<AvailabilityRule[]>('/api/availability', rules);
@@ -748,6 +784,14 @@ export default function App() {
               onUpdateStatus={handleUpdateAppointmentStatus}
               onDelete={handleDeleteAppointment}
               onSaveAvailability={handleSaveAvailability}
+            />
+          )}
+
+          {currentScreen === 'birthdaySubmissions' && (
+            <BirthdaySubmissionsScreen
+              submissions={birthdaySubmissions}
+              onUpdateStatus={handleUpdateBirthdaySubmissionStatus}
+              onDelete={handleDeleteBirthdaySubmission}
             />
           )}
         </div>
