@@ -6,12 +6,14 @@ import {
   UserPlus,
   SlidersHorizontal,
   AlertCircle,
+  AlertTriangle,
   Send,
   UserCheck,
   XCircle,
   Trash2,
   Waves,
   MessageCircle,
+  MessageSquare,
   CheckCircle2,
   X
 } from 'lucide-react';
@@ -415,9 +417,26 @@ export const ProspectsScreen: React.FC<ProspectsScreenProps> = ({
                         ) : '—'}
                       </td>
                       <td className="py-3.5 px-6">
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-mono-code font-medium ${STATUS_STYLES[prospect.status]}`}>
-                          {statusLabel(prospect.status)}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-mono-code font-medium ${STATUS_STYLES[prospect.status]}`}>
+                            {statusLabel(prospect.status)}
+                          </span>
+                          {prospect.lastRelanceChannel === 'WhatsApp' && (
+                            <span title="WhatsApp" className="shrink-0">
+                              <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-300" />
+                            </span>
+                          )}
+                          {prospect.lastRelanceChannel === 'SMS' && (
+                            <span title="SMS" className="shrink-0">
+                              <MessageSquare className="w-3.5 h-3.5 text-sky-600 dark:text-sky-300" />
+                            </span>
+                          )}
+                          {prospect.lastRelanceStatus === 'failed' && (
+                            <span title={t.prospectSendFailedTooltip} className="shrink-0">
+                              <AlertTriangle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-300" />
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3.5 px-6">
                         <div className="flex items-center justify-end gap-1.5">

@@ -336,11 +336,14 @@ export default function App() {
       const updated =
         channel === 'SMS'
           ? await apiPost<Prospect>(`/api/prospects/${prospect.id}/send-sms`, { message })
-          : await apiPatch<Prospect>(`/api/prospects/${prospect.id}/status`, { status: 'contacted' });
+          : await apiPatch<Prospect>(`/api/prospects/${prospect.id}/status`, { status: 'contacted', channel });
       setProspects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      const failed = updated.lastRelanceStatus === 'failed';
       addToast(
-        'success',
-        language === 'fr' ? `Relance ${channel} envoyée` : `${channel} follow-up sent`,
+        failed ? 'warning' : 'success',
+        failed
+          ? (language === 'fr' ? `Échec de l'envoi ${channel}` : `${channel} send failed`)
+          : (language === 'fr' ? `Relance ${channel} envoyée` : `${channel} follow-up sent`),
         `${prospect.name} • ${prospect.phone}`
       );
     } catch (err) {
@@ -350,22 +353,24 @@ export default function App() {
 
   const handleBulkSendProspectSms = async (items: { id: string; message: string }[]) => {
     try {
-      const result = await apiPost<{ sent: Prospect[]; failed: { id: string; name: string; reason: string }[] }>(
+      const result = await apiPost<{ results: { prospect: Prospect; ok: boolean; reason: string | null }[] }>(
         '/api/prospects/bulk/send-sms',
         { items }
       );
       setProspects((prev) => {
-        const sentMap = new Map(result.sent.map((p) => [p.id, p]));
-        return prev.map((p) => sentMap.get(p.id) ?? p);
+        const byId = new Map(result.results.map((r) => [r.prospect.id, r.prospect]));
+        return prev.map((p) => byId.get(p.id) ?? p);
       });
+      const sentCount = result.results.filter((r) => r.ok).length;
+      const failedCount = result.results.length - sentCount;
       addToast(
-        'success',
+        failedCount > 0 && sentCount === 0 ? 'warning' : 'success',
         language === 'fr' ? 'Envoi SMS groupé terminé' : 'Bulk SMS send complete',
         language === 'fr'
-          ? `${result.sent.length} envoyés${result.failed.length ? `, ${result.failed.length} échoués` : ''}.`
-          : `${result.sent.length} sent${result.failed.length ? `, ${result.failed.length} failed` : ''}.`
+          ? `${sentCount} envoyés${failedCount ? `, ${failedCount} échoués` : ''}.`
+          : `${sentCount} sent${failedCount ? `, ${failedCount} failed` : ''}.`
       );
-      return { sentCount: result.sent.length, failedCount: result.failed.length };
+      return { sentCount, failedCount };
     } catch (err) {
       reportError(err);
       return { sentCount: 0, failedCount: items.length };

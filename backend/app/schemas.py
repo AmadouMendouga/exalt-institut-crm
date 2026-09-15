@@ -286,6 +286,9 @@ class ProspectStatusUpdate(BaseModel):
     model_config = CamelModel
 
     status: str
+    # Renseigné quand status == "contacted" par un envoi WhatsApp (pas d'appel
+    # serveur pour ce canal, donc c'est le frontend qui déclare le canal utilisé).
+    channel: str | None = None
 
 
 class ProspectSmsRequest(BaseModel):
@@ -307,28 +310,29 @@ class ProspectBulkSmsRequest(BaseModel):
     items: list[ProspectBulkSmsItem]
 
 
-class ProspectBulkSmsFailure(BaseModel):
-    model_config = CamelModel
-
-    id: str
-    name: str
-    reason: str
-
-
 class ProspectOut(ProspectBase):
     id: str
     status: str
     last_relance_at: datetime | None = None
+    last_relance_channel: str | None = None
+    last_relance_status: str | None = None
     converted_client_id: str | None = None
     created_at: datetime
     updated_at: datetime
 
 
+class ProspectBulkSmsResult(BaseModel):
+    model_config = CamelModel
+
+    prospect: ProspectOut
+    ok: bool
+    reason: str | None = None
+
+
 class ProspectBulkSmsResponse(BaseModel):
     model_config = CamelModel
 
-    sent: list[ProspectOut]
-    failed: list[ProspectBulkSmsFailure]
+    results: list[ProspectBulkSmsResult]
 
 
 class ProspectBulkItem(BaseModel):

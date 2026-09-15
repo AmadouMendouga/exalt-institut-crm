@@ -176,6 +176,11 @@ class Prospect(Base):
     # new -> contacted -> converted, ou not_interested à tout moment
     status: Mapped[str] = mapped_column(String, default="new")
     last_relance_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    # Canal ("WhatsApp"/"SMS") et résultat ("sent"/"failed") de la dernière relance :
+    # WhatsApp est toujours "sent" (pas de retour d'échec possible côté serveur),
+    # SMS reflète le vrai statut renvoyé par la passerelle.
+    last_relance_channel: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_relance_status: Mapped[str | None] = mapped_column(String, nullable=True)
     converted_client_id: Mapped[str | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=_now)
     updated_at: Mapped[datetime] = mapped_column(default=_now, onupdate=_now)

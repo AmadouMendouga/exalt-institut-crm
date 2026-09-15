@@ -53,24 +53,25 @@ def bulk_send_prospect_sms(payload: ProspectBulkSmsRequest, db: Session = Depend
     if not sms.is_configured():
         raise HTTPException(status_code=400, detail="SMS gateway not configured")
 
-    sent: list[models.Prospect] = []
-    failed: list[dict] = []
+    results = []
+    touched: list[models.Prospect] = []
     for item in payload.items:
         prospect = db.query(models.Prospect).filter(models.Prospect.id == item.id).first()
         if not prospect:
-            failed.append({"id": item.id, "name": "?", "reason": "not_found"})
             continue
-        if sms.send_sms(prospect.phone, item.message):
+        ok = sms.send_sms(prospect.phone, item.message)
+        prospect.last_relance_channel = "SMS"
+        prospect.last_relance_status = "sent" if ok else "failed"
+        prospect.last_relance_at = datetime.now(timezone.utc)
+        if ok:
             prospect.status = "contacted"
-            prospect.last_relance_at = datetime.now(timezone.utc)
-            sent.append(prospect)
-        else:
-            failed.append({"id": prospect.id, "name": prospect.name, "reason": "gateway_error"})
+        touched.append(prospect)
+        results.append({"prospect": prospect, "ok": ok, "reason": None if ok else "gateway_error"})
 
     db.commit()
-    for prospect in sent:
+    for prospect in touched:
         db.refresh(prospect)
-    return {"sent": sent, "failed": failed}
+    return {"results": results}
 
 
 @router.patch("/{prospect_id}", response_model=ProspectOut)
@@ -93,10 +94,15 @@ def update_prospect_status(prospect_id: str, payload: ProspectStatusUpdate, db: 
     prospect.status = payload.status
     if payload.status == "contacted":
         prospect.last_relance_at = datetime.now(timezone.utc)
+        if payload.channel:
+            prospect.last_relance_channel = payload.channel
+            prospect.last_relance_status = "sent"
     elif payload.status == "new":
         # Repasser en "à relancer" repart de zéro : sinon la prochaine relance
         # basculerait par erreur sur le modèle "déjà contacté".
         prospect.last_relance_at = None
+        prospect.last_relance_channel = None
+        prospect.last_relance_status = None
     db.commit()
     db.refresh(prospect)
     return prospect
@@ -109,10 +115,13 @@ def send_prospect_sms(prospect_id: str, payload: ProspectSmsRequest, db: Session
         raise HTTPException(status_code=404, detail="Prospect not found")
     if not sms.is_configured():
         raise HTTPException(status_code=400, detail="SMS gateway not configured")
-    if not sms.send_sms(prospect.phone, payload.message):
-        raise HTTPException(status_code=502, detail="SMS gateway error")
-    prospect.status = "contacted"
+
+    ok = sms.send_sms(prospect.phone, payload.message)
+    prospect.last_relance_channel = "SMS"
+    prospect.last_relance_status = "sent" if ok else "failed"
     prospect.last_relance_at = datetime.now(timezone.utc)
+    if ok:
+        prospect.status = "contacted"
     db.commit()
     db.refresh(prospect)
     return prospect

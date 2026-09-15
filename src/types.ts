@@ -118,6 +118,8 @@ export interface Prospect {
   notes: string | null;
   status: ProspectStatus;
   lastRelanceAt: string | null;
+  lastRelanceChannel: 'WhatsApp' | 'SMS' | null;
+  lastRelanceStatus: 'sent' | 'failed' | null;
   convertedClientId: string | null;
   createdAt: string;
   updatedAt: string;
