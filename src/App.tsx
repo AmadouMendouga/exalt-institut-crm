@@ -179,7 +179,12 @@ export default function App() {
 
   // Ouverture de l'envoi groupé WhatsApp depuis la sélection multiple de l'écran Clients
   const handleOpenBulkRelance = (selected: Client[]) => {
-    setBulkRelanceClients(selected);
+    const eligible = selected.filter((client) => client.marketingOptIn);
+    if (eligible.length !== selected.length) {
+      addToast('warning', language === 'fr' ? 'Clients sans consentement exclus' : 'Clients without consent excluded');
+    }
+    if (!eligible.length) return;
+    setBulkRelanceClients(eligible);
     setIsBulkRelanceOpen(true);
   };
 

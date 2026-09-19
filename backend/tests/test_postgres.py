@@ -12,8 +12,18 @@ from app.database import SessionLocal
 from app import models, availability
 from app.routers.appointments import create_appointment
 from app.schemas import AppointmentCreate
+from app.protection import count_attempt
 
 pytestmark = pytest.mark.skipif(not os.getenv('TEST_DATABASE_URL'), reason='Disposable PostgreSQL required')
+
+
+def test_shared_rate_counter_is_atomic():
+    import time
+    key = uuid4().hex
+    bucket = int(time.time()) // 60
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        counts = list(pool.map(lambda _: count_attempt(key, bucket), range(4)))
+    assert sorted(counts) == [1, 2, 3, 4]
 
 
 def test_dispatch_insert_matches_migrations():
