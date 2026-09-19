@@ -80,12 +80,13 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
     });
   }, [clients, searchQuery, selectedGender, statusFilter]);
 
-  const clientStatusLabel = (status: ClientStatus) => {
+  const clientStatusLabel = (status: ClientStatus): string => {
     if (language === 'en') return status;
     switch (status) {
       case 'Follow-up Needed': return 'Relance nécessaire';
       case 'Up to date': return 'À jour';
       case 'Pending Response': return 'Réponse en attente';
+      default: return status;
     }
   };
 
