@@ -16,11 +16,13 @@ import {
   Clock,
   MessageCircle,
   Cake,
+  Download,
   X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Client, Gender, ClientStatus } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { downloadCsv } from '../lib/exportCsv';
 
 interface CustomersScreenProps {
   clients: Client[];
@@ -72,6 +74,35 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
       return matchSearch && matchGender && matchStatus;
     });
   }, [clients, searchQuery, selectedGender, statusFilter]);
+
+  const handleExport = () => {
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(
+      `clients-exalt-${date}.csv`,
+      [
+        { label: 'ID', value: (c: Client) => c.id },
+        { label: 'Nom', value: (c: Client) => c.name },
+        { label: 'Civilité', value: (c: Client) => c.prefix },
+        { label: 'Sexe', value: (c: Client) => c.gender },
+        { label: 'Email', value: (c: Client) => c.email },
+        { label: 'Téléphone', value: (c: Client) => c.phone },
+        { label: 'Dernier service', value: (c: Client) => c.lastService },
+        { label: 'Date dernier service', value: (c: Client) => c.lastServiceDate },
+        { label: 'Date brute', value: (c: Client) => c.rawDate },
+        { label: 'Statut', value: (c: Client) => c.status },
+        { label: 'Upsell suggéré', value: (c: Client) => c.suggestedUpsell },
+        { label: 'Canal préféré', value: (c: Client) => c.preferredChannel },
+        { label: 'Nombre de visites', value: (c: Client) => c.totalVisits },
+        { label: 'Total dépensé (FCFA)', value: (c: Client) => c.totalSpent },
+        { label: 'Date de naissance', value: (c: Client) => c.birthDate || '' },
+        { label: 'Consentement marketing', value: (c: Client) => c.marketingOptIn ? 'Oui' : 'Non' },
+        { label: 'Prochain rappel', value: (c: Client) => c.nextReminderDate || '' },
+        { label: 'Note du rappel', value: (c: Client) => c.nextReminderNote || '' },
+        { label: 'Notes', value: (c: Client) => c.notes || '' },
+      ],
+      filteredClients
+    );
+  };
 
   // Pagination calculation
   const totalEntries = filteredClients.length;
@@ -138,13 +169,25 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onOpenAddClient}
-          className="self-start sm:self-auto bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>{t.addClient}</span>
-        </button>
+        <div className="self-start sm:self-auto flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="bg-[var(--surface)] border border-[var(--border-color)]/70 hover:border-[var(--accent)] text-stone-700 dark:text-stone-200 text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+            title={language === 'fr' ? 'Exporter les clients filtrés en CSV' : 'Export filtered clients to CSV'}
+          >
+            <Download className="w-4 h-4" />
+            <span>{language === 'fr' ? 'Exporter CSV' : 'Export CSV'}</span>
+            <span className="text-[10px] text-stone-400 dark:text-stone-500">({filteredClients.length})</span>
+          </button>
+          <button
+            onClick={onOpenAddClient}
+            className="bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>{t.addClient}</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Bar (Search + Gender Filter + More Filters) matching Image 1 */}
