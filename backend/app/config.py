@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     admin_email: str
     admin_password: str
     port: int = 8787
+    public_app_url: str = "https://exalt-beauty.up.railway.app"
+    automation_enabled: bool = True
     environment: str = "development"
     sms_gateway_login: str | None = None
     sms_gateway_password: str | None = None

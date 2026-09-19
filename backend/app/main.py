@@ -11,6 +11,7 @@ from .automation import run_all_active_campaigns
 from .birthday_page import BIRTHDAY_PAGE_HTML
 from .config import ROOT_DIR, settings
 from .database import SessionLocal
+from .protection import protect_requests
 from .rdv_page import RDV_PAGE_HTML
 from .review_page import REVIEW_PAGE_HTML
 from .routers import (
@@ -47,6 +48,12 @@ class SPAStaticFiles(StaticFiles):
         return response
 
 app = FastAPI(title="Exalt Institut API")
+app.middleware('http')(protect_requests)
+
+
+@app.get('/api/health', include_in_schema=False)
+def health():
+    return {'status': 'ok'}
 
 app.include_router(auth.router)
 app.include_router(clients.router)
@@ -101,7 +108,7 @@ def _run_automation_sweep() -> None:
 
 @app.on_event("startup")
 def start_scheduler() -> None:
-    if not scheduler.running:
+    if settings.automation_enabled and not scheduler.running:
         scheduler.add_job(_run_automation_sweep, "interval", minutes=30, id="automation_sweep", replace_existing=True)
         scheduler.start()
 

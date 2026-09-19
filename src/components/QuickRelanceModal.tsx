@@ -141,7 +141,7 @@ export const QuickRelanceModal: React.FC<QuickRelanceModalProps> = ({
   };
 
   const handleSendClick = () => {
-    if (!client || sendStatus !== 'idle') return;
+    if (!client || sendStatus !== 'idle' || !client.marketingOptIn) return;
 
     // Navigation directe (pas window.open) : sur certains navigateurs Android
     // (Samsung Internet notamment), le passage par un nouvel onglet avant le

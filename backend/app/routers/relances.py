@@ -27,9 +27,14 @@ def send_relance(payload: RelanceSendRequest, db: Session = Depends(get_db)):
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
 
-    if payload.channel == "SMS" and sms.is_configured():
-        if not sms.send_sms(client.phone, payload.message):
-            raise HTTPException(status_code=502, detail="SMS gateway error")
+    if payload.channel not in ("WhatsApp", "SMS", "Email"):
+        raise HTTPException(status_code=422, detail="Invalid channel")
+    if payload.channel == "Email":
+        raise HTTPException(status_code=409, detail="Aucun fournisseur email connecté : aucun message envoyé.")
+    if payload.channel == "SMS" and not sms.is_configured():
+        raise HTTPException(status_code=409, detail="Passerelle SMS non configurée : aucun message envoyé.")
+    if not client.marketing_opt_in:
+        raise HTTPException(status_code=409, detail="Le consentement marketing de ce client est désactivé.")
 
     lang = "en" if payload.language == "en" else "fr"
     now = datetime.now(timezone.utc)
@@ -44,10 +49,16 @@ def send_relance(payload: RelanceSendRequest, db: Session = Depends(get_db)):
                 models.TimelineItem.id == payload.timeline_item_id,
                 models.TimelineItem.client_id == client.id,
             )
+            .with_for_update()
             .first()
         )
         if not draft:
             raise HTTPException(status_code=404, detail="Timeline item not found")
+        if draft.status != "Drafts":
+            raise HTTPException(status_code=409, detail="Cette relance a déjà été traitée.")
+
+    if payload.channel == "SMS" and not sms.send_sms(client.phone, payload.message):
+        raise HTTPException(status_code=502, detail="SMS gateway error")
 
     if draft:
         # Finalisation d'un brouillon généré par une automatisation (ex. relance
@@ -57,7 +68,7 @@ def send_relance(payload: RelanceSendRequest, db: Session = Depends(get_db)):
         draft.time = "À l'instant" if lang == "fr" else "Just now"
         draft.description = f"{payload.message[:75]}..."
         draft.channel = payload.channel
-        draft.status = "Upcoming"
+        draft.status = "Past 7 Days"
         draft.scheduled_at = now
         if draft.campaign_id:
             campaign = (
@@ -82,7 +93,7 @@ def send_relance(payload: RelanceSendRequest, db: Session = Depends(get_db)):
             description=f"{payload.message[:75]}...",
             target_client=client.name,
             channel=payload.channel,
-            status="Upcoming",
+            status="Past 7 Days",
             scheduled_at=now,
             client_id=client.id,
         )

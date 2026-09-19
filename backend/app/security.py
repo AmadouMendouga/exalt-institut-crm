@@ -2,7 +2,10 @@ from datetime import datetime, timedelta, timezone
 
 import bcrypt
 import jwt
-from fastapi import HTTPException, Request
+from fastapi import Depends, HTTPException, Request
+from sqlalchemy.orm import Session
+from .database import get_db
+from .models import User
 
 from .config import settings
 
@@ -24,7 +27,10 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+    try:
+        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
+    except ValueError:
+        return False
 
 
 def sign_token(payload: dict) -> str:
@@ -36,7 +42,7 @@ def decode_token(token: str) -> dict:
     return jwt.decode(token, settings.jwt_secret, algorithms=[JWT_ALGORITHM])
 
 
-def get_current_user(request: Request) -> dict:
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> dict:
     token = request.cookies.get(AUTH_COOKIE_NAME)
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -44,4 +50,7 @@ def get_current_user(request: Request) -> dict:
         payload = decode_token(token)
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired session")
-    return {"id": payload["id"], "email": payload["email"], "name": payload["name"]}
+    user = db.get(User, payload.get("id")) if payload.get("id") else None
+    if user is None:
+        raise HTTPException(status_code=401, detail="Session no longer valid")
+    return {"id": user.id, "email": user.email, "name": user.name}

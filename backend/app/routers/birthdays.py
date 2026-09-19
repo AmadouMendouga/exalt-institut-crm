@@ -73,17 +73,17 @@ def update_birthday_submission_status(submission_id: str, payload: BirthdaySubmi
                 prefix="Mme." if submission.gender == "F" else "M.",
                 gender=submission.gender,
                 initials=_initials(submission.name),
-                email=f"{submission.name.lower().replace(' ', '.')}@example.com",
+                email="",
                 phone=submission.phone,
                 last_service="",
                 last_service_date="",
-                raw_date=today,
+                raw_date="",
                 status="Follow-up Needed",
                 suggested_upsell="Soin Protecteur",
                 preferred_channel="WhatsApp",
                 avatar_bg=_avatar_bg(submission.gender),
                 birth_date=submission.birth_date,
-                marketing_opt_in=True,
+                marketing_opt_in=False,
             )
             db.add(client)
             db.flush()  # attribue client.id avant de l'utiliser ci-dessous

@@ -57,7 +57,7 @@ async def upload_service_image(service_id: str, file: UploadFile, db: Session = 
         raise HTTPException(status_code=404, detail="Service not found")
     if not (file.content_type or "").startswith("image/"):
         raise HTTPException(status_code=422, detail="Le fichier doit être une image")
-    data = await file.read()
+    data = await file.read(MAX_IMAGE_BYTES + 1)
     if len(data) > MAX_IMAGE_BYTES:
         raise HTTPException(status_code=422, detail="Image trop volumineuse (5 Mo max)")
     service.image_data = data

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import ForeignKey, LargeBinary, String, UniqueConstraint
+from sqlalchemy import BigInteger, ForeignKey, LargeBinary, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -14,6 +14,13 @@ def _uuid() -> str:
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+class RequestRateLimit(Base):
+    __tablename__ = 'request_rate_limits'
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    bucket: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
+    count: Mapped[int] = mapped_column()
 
 
 class User(Base):
@@ -134,6 +141,7 @@ class CampaignDispatchLog(Base):
     campaign_id: Mapped[str] = mapped_column(ForeignKey("automation_campaigns.id"))
     client_id: Mapped[str] = mapped_column(ForeignKey("clients.id"))
     period_key: Mapped[str] = mapped_column(String)
+    dispatched_at: Mapped[datetime] = mapped_column(default=_now)
 
 
 class Review(Base):

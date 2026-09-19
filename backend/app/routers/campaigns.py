@@ -17,7 +17,7 @@ def list_campaigns(db: Session = Depends(get_db)):
 
 @router.post("", response_model=CampaignOut, status_code=201)
 def create_campaign(payload: CampaignCreate, db: Session = Depends(get_db)):
-    campaign = models.AutomationCampaign(**payload.model_dump())
+    campaign = models.AutomationCampaign(**payload.model_dump(exclude={'stats', 'last_triggered'}), stats={'sent': 0, 'opened': 0, 'clicked': 0, 'converted': 0})
     db.add(campaign)
     db.commit()
     db.refresh(campaign)
@@ -29,7 +29,7 @@ def update_campaign(campaign_id: str, payload: CampaignUpdate, db: Session = Dep
     campaign = db.query(models.AutomationCampaign).filter(models.AutomationCampaign.id == campaign_id).first()
     if not campaign:
         raise HTTPException(status_code=404, detail="Campaign not found")
-    for field, value in payload.model_dump().items():
+    for field, value in payload.model_dump(exclude={'stats', 'last_triggered'}).items():
         setattr(campaign, field, value)
     db.commit()
     db.refresh(campaign)

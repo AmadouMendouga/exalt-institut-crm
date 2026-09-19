@@ -20,7 +20,7 @@ import { useCountUp } from '../hooks/useCountUp';
 interface OverviewScreenProps {
   clients: Client[];
   timeline: TimelineItem[];
-  onQuickRelance: (client: Client, mode?: 'SMS' | 'Email') => void;
+  onQuickRelance: (client: Client, mode?: Client['preferredChannel']) => void;
   onNavigate: (screen: NavScreen) => void;
 }
 

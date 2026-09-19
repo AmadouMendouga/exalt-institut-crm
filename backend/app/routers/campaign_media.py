@@ -28,7 +28,7 @@ async def upload_campaign_media(kind: str, file: UploadFile, db: Session = Depen
     content_type = file.content_type or ""
     if not content_type.startswith(EXPECTED_PREFIX[kind]):
         raise HTTPException(status_code=422, detail=f"File must be a {kind}")
-    data = await file.read()
+    data = await file.read(MAX_SIZES[kind] + 1)
     if len(data) > MAX_SIZES[kind]:
         raise HTTPException(status_code=413, detail="File too large")
 

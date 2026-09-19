@@ -21,8 +21,10 @@ import re
 from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from . import models, sms
+from .config import settings
 from .routers.relances import build_date_group
 
 _PLACEHOLDERS = {
@@ -61,6 +63,9 @@ def render_message(template: str, client: models.Client) -> str:
         "https://exalt-beauty.up.railway.app/avis",
         f"https://exalt-beauty.up.railway.app/avis?client={client.id}",
     )
+    for old in ("https://exalt-beauty.up.railway.app", "https://srv-crm.co", "https://service-crm.com"):
+        rendered = rendered.replace(old, settings.public_app_url.rstrip("/"))
+    rendered = rendered.replace("/rendez-vous", "/rdv")
     return rendered
 
 
@@ -106,7 +111,9 @@ def find_due_matches(
     """Retourne les (client, period_key) dus pour cette campagne, non déjà traités."""
 
     now = now or datetime.now(timezone.utc)
-    today = now.date()
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    today = now.astimezone(_LOCAL_TZ).date()
     delta = _delay_to_timedelta(campaign.delay_time, campaign.delay_unit)
 
     clients = db.query(models.Client).filter(models.Client.marketing_opt_in.is_(True)).all()
@@ -115,9 +122,9 @@ def find_due_matches(
     for client in clients:
         if campaign.action_event in ("After a Service", "Inactivity Period"):
             last_service = _parse_iso_date(client.raw_date)
-            if not last_service:
+            if not last_service or not client.last_service:
                 continue
-            due_at = datetime.combine(last_service, datetime.min.time(), tzinfo=timezone.utc) + delta
+            due_at = datetime.combine(last_service, datetime.min.time(), tzinfo=_LOCAL_TZ) + delta
             if due_at > now:
                 continue
             candidates.append((client, f"service:{client.raw_date}"))
@@ -136,15 +143,20 @@ def find_due_matches(
             if not month_day:
                 continue
             month, day = month_day
+            # Validate against a leap year; malformed legacy dates are ignored.
             try:
-                target_this_year = date(today.year, month, day)
+                date(2000, month, day)
             except ValueError:
-                # 29 février sur une année non bissextile : on célèbre le 28 février.
-                target_this_year = date(today.year, month, 28)
-            send_date = target_this_year - delta
-            if today < send_date:
                 continue
-            candidates.append((client, f"birthday:{today.year}"))
+            # Include next year for reminders preceding a January birthday.
+            for year in (today.year, today.year + 1):
+                try:
+                    birthday = date(year, month, day)
+                except ValueError:
+                    birthday = date(year, 2, 28)
+                due_at = datetime.combine(birthday, datetime.min.time(), tzinfo=_LOCAL_TZ) - delta
+                if due_at <= now < due_at + timedelta(days=1):
+                    candidates.append((client, f"birthday:{year}"))
 
         # action_event inconnu (ex. valeur libre historique) : aucune correspondance,
         # plutôt qu'une erreur — une campagne mal configurée reste simplement inactive.
@@ -167,8 +179,16 @@ def dispatch_campaign(
     """Exécute une campagne maintenant : matching réel + création des relances."""
 
     now = now or datetime.now(timezone.utc)
+    # Serialize scheduler/manual runs across Railway replicas before any send.
+    db.execute(text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"), {"key": f"campaign:{campaign.id}"})
+    db.refresh(campaign)
+    # Never count an unconfigured channel as a successful delivery.
+    if campaign.channel not in ("WhatsApp", "SMS") or (campaign.channel == "SMS" and not sms.is_configured()):
+        db.commit()
+        return []
     matches = find_due_matches(db, campaign, now)
     if not matches:
+        db.commit()
         return []
 
     lang = "en" if language == "en" else "fr"
@@ -184,6 +204,9 @@ def dispatch_campaign(
         # sinon comme Email, aucun fournisseur n'est branché, l'envoi est simulé.
         sms_dispatched = is_sms and sms.is_configured() and sms.send_sms(client.phone, message)
         sms_pending_real_send = is_sms and sms.is_configured() and not sms_dispatched
+        if sms_pending_real_send:
+            # Leave the occurrence eligible for the next sweep.
+            continue
 
         item = models.TimelineItem(
             date_group=build_date_group(lang, now),
@@ -192,7 +215,7 @@ def dispatch_campaign(
             description=f"{message[:75]}...",
             target_client=client.name,
             channel=campaign.channel,
-            status="Drafts" if is_whatsapp else "Upcoming",
+            status="Drafts" if is_whatsapp else "Past 7 Days",
             scheduled_at=now,
             campaign_id=campaign.id,
             client_id=client.id,
@@ -202,7 +225,7 @@ def dispatch_campaign(
             models.CampaignDispatchLog(campaign_id=campaign.id, client_id=client.id, period_key=period_key)
         )
 
-        if not is_whatsapp and not sms_pending_real_send:
+        if sms_dispatched:
             # Email, ou SMS simulé/réellement envoyé avec succès.
             client.status = "Up to date"
             sent_count += 1
