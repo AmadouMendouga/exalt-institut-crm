@@ -88,7 +88,7 @@ function parseFlexibleDate(value: ExcelCellValue): Date | null {
     return new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), Number(ss));
   }
 
-  const isoDate = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  // Une date partielle MM-JJ (utilisée pour certains anniversaires du CRM)\n  // reste volontairement du texte : Excel ne doit pas lui inventer une année.\n  if (/^\d{1,2}-\d{1,2}$/.test(raw)) return null;\n\n  const isoDate = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoDate) {
     const [, y, m, d] = isoDate;
     return new Date(Number(y), Number(m) - 1, Number(d));
