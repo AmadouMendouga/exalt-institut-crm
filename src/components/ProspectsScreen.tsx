@@ -15,11 +15,13 @@ import {
   MessageCircle,
   MessageSquare,
   CheckCircle2,
+  Download,
   X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Prospect, ProspectStatus } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { downloadCsv } from '../lib/exportCsv';
 
 interface ProspectsScreenProps {
   prospects: Prospect[];
@@ -66,7 +68,7 @@ export const ProspectsScreen: React.FC<ProspectsScreenProps> = ({
   onDelete,
   onBulkRelance
 }) => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<Set<ProspectStatus>>(new Set());
   const [selectedWaves, setSelectedWaves] = useState<Set<string>>(new Set());
@@ -135,6 +137,31 @@ export const ProspectsScreen: React.FC<ProspectsScreenProps> = ({
     });
   }, [prospects, searchQuery, selectedStatuses, selectedWaves]);
 
+  const handleExport = () => {
+    const date = new Date().toISOString().slice(0, 10);
+    downloadCsv(
+      `prospects-exalt-${date}.csv`,
+      [
+        { label: 'ID', value: (p: Prospect) => p.id },
+        { label: 'Civilité', value: (p: Prospect) => p.civility || '' },
+        { label: 'Nom', value: (p: Prospect) => p.name },
+        { label: 'Téléphone', value: (p: Prospect) => p.phone },
+        { label: 'Date de prospection', value: (p: Prospect) => p.prospectedDate },
+        { label: 'Source', value: (p: Prospect) => p.source || '' },
+        { label: 'Vague', value: (p: Prospect) => p.wave || '' },
+        { label: 'Statut', value: (p: Prospect) => p.status },
+        { label: 'Dernière relance', value: (p: Prospect) => p.lastRelanceAt || '' },
+        { label: 'Canal dernière relance', value: (p: Prospect) => p.lastRelanceChannel || '' },
+        { label: 'Résultat dernière relance', value: (p: Prospect) => p.lastRelanceStatus || '' },
+        { label: 'ID client converti', value: (p: Prospect) => p.convertedClientId || '' },
+        { label: 'Notes', value: (p: Prospect) => p.notes || '' },
+        { label: 'Créé le', value: (p: Prospect) => p.createdAt },
+        { label: 'Mis à jour le', value: (p: Prospect) => p.updatedAt },
+      ],
+      filtered
+    );
+  };
+
   const totalEntries = filtered.length;
   const totalPages = Math.ceil(totalEntries / itemsPerPage) || 1;
   const safePage = Math.min(currentPage, totalPages);
@@ -191,13 +218,25 @@ export const ProspectsScreen: React.FC<ProspectsScreenProps> = ({
           </p>
         </div>
 
-        <button
-          onClick={onOpenAddProspect}
-          className="self-start sm:self-auto bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>{t.addProspectBtn}</span>
-        </button>
+        <div className="self-start sm:self-auto flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="bg-[var(--surface)] border border-[var(--border-color)]/70 hover:border-[var(--accent)] text-stone-700 dark:text-stone-200 text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+            title={language === 'fr' ? 'Exporter les prospects filtrés en CSV' : 'Export filtered prospects to CSV'}
+          >
+            <Download className="w-4 h-4" />
+            <span>{language === 'fr' ? 'Exporter CSV' : 'Export CSV'}</span>
+            <span className="text-[10px] text-stone-400 dark:text-stone-500">({filtered.length})</span>
+          </button>
+          <button
+            onClick={onOpenAddProspect}
+            className="bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>{t.addProspectBtn}</span>
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-3">
