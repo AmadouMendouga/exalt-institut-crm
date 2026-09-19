@@ -16,12 +16,16 @@ import {
   MessageSquare,
   CheckCircle2,
   Download,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
   X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Prospect, ProspectStatus } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { downloadCsv } from '../lib/exportCsv';
+import { downloadProfessionalExcel } from '../lib/exportExcel';
 
 interface ProspectsScreenProps {
   prospects: Prospect[];
@@ -42,6 +46,27 @@ const STATUS_STYLES: Record<ProspectStatus, string> = {
 
 const ALL_STATUSES: ProspectStatus[] = ['new', 'contacted', 'converted', 'not_interested'];
 const NO_WAVE = '__no_wave__';
+
+function parseProspectedDate(value: string): Date | null {
+  const raw = value.trim();
+  const fr = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (fr) {
+    const [, d, m, y] = fr;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
+  const safeIso = raw.replace(/(\.\d{3})\d+/, '$1');
+  const parsed = new Date(safeIso);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function daysSinceProspected(value: string): number | '' {
+  const parsed = parseProspectedDate(value);
+  if (!parsed) return '';
+  const start = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()).getTime();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  return Math.max(0, Math.floor((today - start) / 86400000));
+}
 
 // Pagination compacte : numéros pleins jusqu'à 7 pages, sinon 1, 2 … voisins de la
 // page courante … dernière, pour ne jamais déborder même avec des centaines d'entrées.
@@ -75,6 +100,7 @@ export const ProspectsScreen: React.FC<ProspectsScreenProps> = ({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const itemsPerPage = 15;
 
   const statusLabel = (status: ProspectStatus) => {
@@ -137,29 +163,166 @@ export const ProspectsScreen: React.FC<ProspectsScreenProps> = ({
     });
   }, [prospects, searchQuery, selectedStatuses, selectedWaves]);
 
-  const handleExport = () => {
+  const resultLabel = (result: Prospect['lastRelanceStatus']) => {
+    if (!result) return '';
+    if (language === 'en') return result;
+    return result === 'sent' ? 'Envoyé' : 'Échec';
+  };
+
+  const handleExportCsv = () => {
     const date = new Date().toISOString().slice(0, 10);
     downloadCsv(
       `prospects-exalt-${date}.csv`,
       [
-        { label: 'ID', value: (p: Prospect) => p.id },
-        { label: 'Civilité', value: (p: Prospect) => p.civility || '' },
         { label: 'Nom', value: (p: Prospect) => p.name },
+        { label: 'Civilité', value: (p: Prospect) => p.civility || '' },
         { label: 'Téléphone', value: (p: Prospect) => p.phone },
         { label: 'Date de prospection', value: (p: Prospect) => p.prospectedDate },
         { label: 'Source', value: (p: Prospect) => p.source || '' },
         { label: 'Vague', value: (p: Prospect) => p.wave || '' },
-        { label: 'Statut', value: (p: Prospect) => p.status },
+        { label: 'Statut', value: (p: Prospect) => statusLabel(p.status) },
         { label: 'Dernière relance', value: (p: Prospect) => p.lastRelanceAt || '' },
-        { label: 'Canal dernière relance', value: (p: Prospect) => p.lastRelanceChannel || '' },
-        { label: 'Résultat dernière relance', value: (p: Prospect) => p.lastRelanceStatus || '' },
-        { label: 'ID client converti', value: (p: Prospect) => p.convertedClientId || '' },
+        { label: 'Canal de relance', value: (p: Prospect) => p.lastRelanceChannel || '' },
+        { label: 'Résultat relance', value: (p: Prospect) => resultLabel(p.lastRelanceStatus) },
+        { label: 'Jours depuis prospection', value: (p: Prospect) => daysSinceProspected(p.prospectedDate) },
+        { label: 'Converti ?', value: (p: Prospect) => p.status === 'converted' ? 'Oui' : 'Non' },
         { label: 'Notes', value: (p: Prospect) => p.notes || '' },
-        { label: 'Créé le', value: (p: Prospect) => p.createdAt },
-        { label: 'Mis à jour le', value: (p: Prospect) => p.updatedAt },
+        { label: 'Date de création', value: (p: Prospect) => p.createdAt },
+        { label: 'Dernière modification', value: (p: Prospect) => p.updatedAt },
+        { label: 'ID Prospect', value: (p: Prospect) => p.id },
+        { label: 'ID Client converti', value: (p: Prospect) => p.convertedClientId || '' },
       ],
       filtered
     );
+  };
+
+  const handleExportExcel = () => {
+    const date = new Date().toISOString().slice(0, 10);
+    const total = filtered.length;
+    const newCount = filtered.filter((p) => p.status === 'new').length;
+    const contactedCount = filtered.filter((p) => p.status === 'contacted').length;
+    const convertedCount = filtered.filter((p) => p.status === 'converted').length;
+    const notInterestedCount = filtered.filter((p) => p.status === 'not_interested').length;
+    const sentCount = filtered.filter((p) => p.lastRelanceStatus === 'sent').length;
+    const failedCount = filtered.filter((p) => p.lastRelanceStatus === 'failed').length;
+
+    const sourceCounts = Array.from(
+      filtered.reduce((map, p) => {
+        const label = p.source || 'Non renseignée';
+        map.set(label, (map.get(label) || 0) + 1);
+        return map;
+      }, new Map<string, number>())
+    ).sort((a, b) => b[1] - a[1]);
+
+    const waveCounts = Array.from(
+      filtered.reduce((map, p) => {
+        const label = p.wave || 'Sans vague';
+        map.set(label, (map.get(label) || 0) + 1);
+        return map;
+      }, new Map<string, number>())
+    ).sort((a, b) => b[1] - a[1]);
+
+    downloadProfessionalExcel({
+      filename: `prospects-exalt-${date}.xlsx`,
+      dataSheetName: 'Prospects',
+      tableName: 'ProspectsExalt',
+      rows: filtered,
+      columns: [
+        { header: 'Nom', width: 24, value: (p: Prospect) => p.name },
+        { header: 'Civilité', width: 11, value: (p: Prospect) => p.civility || '' },
+        { header: 'Téléphone', width: 19, value: (p: Prospect) => p.phone },
+        { header: 'Date de prospection', width: 19, kind: 'date', value: (p: Prospect) => p.prospectedDate },
+        { header: 'Source', width: 28, value: (p: Prospect) => p.source || '' },
+        { header: 'Vague', width: 18, value: (p: Prospect) => p.wave || '' },
+        {
+          header: 'Statut',
+          width: 20,
+          value: (p: Prospect) => statusLabel(p.status),
+          style: (p: Prospect) => p.status,
+        },
+        { header: 'Dernière relance', width: 21, kind: 'datetime', value: (p: Prospect) => p.lastRelanceAt || '' },
+        { header: 'Canal de relance', width: 18, value: (p: Prospect) => p.lastRelanceChannel || '' },
+        {
+          header: 'Résultat relance',
+          width: 18,
+          value: (p: Prospect) => resultLabel(p.lastRelanceStatus),
+          style: (p: Prospect) =>
+            p.lastRelanceStatus === 'sent' ? 'sent' :
+            p.lastRelanceStatus === 'failed' ? 'failed' :
+            undefined,
+        },
+        { header: 'Jours depuis prospection', width: 22, kind: 'number', value: (p: Prospect) => daysSinceProspected(p.prospectedDate) },
+        {
+          header: 'Converti ?',
+          width: 13,
+          value: (p: Prospect) => p.status === 'converted' ? 'Oui' : 'Non',
+          style: (p: Prospect) => p.status === 'converted' ? 'converted' : undefined,
+        },
+        { header: 'Notes', width: 38, wrap: true, value: (p: Prospect) => p.notes || '' },
+        { header: 'Date de création', width: 21, kind: 'datetime', value: (p: Prospect) => p.createdAt },
+        { header: 'Dernière modification', width: 21, kind: 'datetime', value: (p: Prospect) => p.updatedAt },
+        { header: 'ID Prospect', width: 38, value: (p: Prospect) => p.id },
+        { header: 'ID Client converti', width: 38, value: (p: Prospect) => p.convertedClientId || '' },
+      ],
+      summaryTitle: language === 'fr' ? 'Résumé analytique — Prospects' : 'Analytical summary — Prospects',
+      summaryMetrics: [
+        { label: 'Total prospects', value: total },
+        { label: 'Nouveaux', value: newCount },
+        { label: 'Contactés', value: contactedCount },
+        { label: 'Convertis', value: convertedCount },
+        { label: 'Non intéressés', value: notInterestedCount },
+        { label: 'Taux de conversion', value: total ? convertedCount / total : 0, kind: 'percent' },
+        { label: 'Relances envoyées', value: sentCount },
+        { label: 'Échecs de relance', value: failedCount },
+        { label: 'Sources distinctes', value: sourceCounts.length },
+        { label: 'Vagues distinctes', value: waveCounts.length },
+      ],
+      distributions: [
+        {
+          title: 'Répartition par statut',
+          rows: [
+            { label: statusLabel('new'), count: newCount, percent: total ? newCount / total : 0, style: 'new' },
+            { label: statusLabel('contacted'), count: contactedCount, percent: total ? contactedCount / total : 0, style: 'contacted' },
+            { label: statusLabel('converted'), count: convertedCount, percent: total ? convertedCount / total : 0, style: 'converted' },
+            { label: statusLabel('not_interested'), count: notInterestedCount, percent: total ? notInterestedCount / total : 0, style: 'not_interested' },
+          ],
+        },
+        {
+          title: 'Répartition par vague',
+          rows: waveCounts.map(([label, count]) => ({
+            label,
+            count,
+            percent: total ? count / total : 0,
+          })),
+        },
+        {
+          title: 'Répartition par source',
+          rows: sourceCounts.map(([label, count]) => ({
+            label,
+            count,
+            percent: total ? count / total : 0,
+          })),
+        },
+      ],
+      exportInfo: [
+        { label: 'Export effectué le', value: new Date().toLocaleString(language === 'fr' ? 'fr-FR' : 'en-GB') },
+        { label: 'Nombre de lignes exportées', value: total },
+        { label: 'Recherche', value: searchQuery || 'Aucune' },
+        {
+          label: 'Statuts',
+          value: selectedStatuses.size === 0
+            ? 'Tous'
+            : Array.from(selectedStatuses).map((status) => statusLabel(status)).join(', '),
+        },
+        {
+          label: 'Vagues',
+          value: selectedWaves.size === 0
+            ? 'Toutes'
+            : Array.from(selectedWaves).map((wave) => wave === NO_WAVE ? 'Sans vague' : wave).join(', '),
+        },
+        { label: 'Périmètre', value: 'Toutes les lignes correspondant aux filtres actifs, pagination ignorée' },
+      ],
+    });
   };
 
   const totalEntries = filtered.length;
@@ -219,16 +382,65 @@ export const ProspectsScreen: React.FC<ProspectsScreenProps> = ({
         </div>
 
         <div className="self-start sm:self-auto flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={handleExport}
-            className="bg-[var(--surface)] border border-[var(--border-color)]/70 hover:border-[var(--accent)] text-stone-700 dark:text-stone-200 text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
-            title={language === 'fr' ? 'Exporter les prospects filtrés en CSV' : 'Export filtered prospects to CSV'}
-          >
-            <Download className="w-4 h-4" />
-            <span>{language === 'fr' ? 'Exporter CSV' : 'Export CSV'}</span>
-            <span className="text-[10px] text-stone-400 dark:text-stone-500">({filtered.length})</span>
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setExportMenuOpen((open) => !open)}
+              className="bg-[var(--surface)] border border-[var(--border-color)]/70 hover:border-[var(--accent)] text-stone-700 dark:text-stone-200 text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+              title={language === 'fr' ? 'Télécharger les prospects filtrés' : 'Download filtered prospects'}
+            >
+              <Download className="w-4 h-4" />
+              <span>{language === 'fr' ? 'Télécharger' : 'Download'}</span>
+              <span className="text-[10px] text-stone-400 dark:text-stone-500">({filtered.length})</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+
+            <AnimatePresence>
+              {exportMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute right-0 mt-1.5 w-72 bg-[var(--surface)] rounded-xl shadow-xl border border-[var(--border-color)]/60 p-1.5 z-40"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExportExcel();
+                      setExportMenuOpen(false);
+                    }}
+                    className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-[var(--surface-alt)] cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 mt-0.5 text-emerald-600 dark:text-emerald-300 shrink-0" />
+                    <span>
+                      <span className="block text-xs font-semibold text-[var(--text-primary)]">Excel professionnel (.xlsx)</span>
+                      <span className="block text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                        Couleurs, filtres, dates, résumé et informations d’export
+                      </span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExportCsv();
+                      setExportMenuOpen(false);
+                    }}
+                    className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-[var(--surface-alt)] cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 mt-0.5 text-stone-500 shrink-0" />
+                    <span>
+                      <span className="block text-xs font-semibold text-[var(--text-primary)]">CSV brut (.csv)</span>
+                      <span className="block text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                        Format léger pour Python, Power BI ou import de données
+                      </span>
+                    </span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <button
             onClick={onOpenAddProspect}
             className="bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
