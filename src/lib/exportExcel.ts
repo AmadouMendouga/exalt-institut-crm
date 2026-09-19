@@ -236,6 +236,7 @@ function buildSummarySheet(
   distributions: ExcelDistribution[]
 ): string {
   const rows: string[] = [];
+  const dataBarRanges: string[] = [];
   rows.push(`<row r="1" ht="28" customHeight="1">${cellXml('A1', title, 14, 'text')}</row>`);
 
   let row = 3;
@@ -269,6 +270,7 @@ function buildSummarySheet(
     );
     row += 1;
 
+    const distributionStartRow = row;
     distribution.rows.forEach((item) => {
       const labelStyle = semanticStyleIndex(item.style) ?? 23;
       rows.push(
@@ -280,9 +282,24 @@ function buildSummarySheet(
       );
       row += 1;
     });
+    if (row > distributionStartRow) {
+      dataBarRanges.push(`C${distributionStartRow}:C${row - 1}`);
+    }
 
     row += 2;
   });
+
+  const conditionalFormatting = dataBarRanges
+    .map((range, index) => `<conditionalFormatting sqref="${range}">
+      <cfRule type="dataBar" priority="${index + 1}">
+        <dataBar showValue="1">
+          <cfvo type="num" val="0"/>
+          <cfvo type="num" val="1"/>
+          <color rgb="FFC96B4B"/>
+        </dataBar>
+      </cfRule>
+    </conditionalFormatting>`)
+    .join('');
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
@@ -294,6 +311,7 @@ function buildSummarySheet(
   </cols>
   <sheetData>${rows.join('')}</sheetData>
   <mergeCells count="1"><mergeCell ref="A1:C1"/></mergeCells>
+  ${conditionalFormatting}
 </worksheet>`;
 }
 
