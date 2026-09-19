@@ -103,12 +103,13 @@ export const ProspectsScreen: React.FC<ProspectsScreenProps> = ({
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const itemsPerPage = 15;
 
-  const statusLabel = (status: ProspectStatus) => {
+  const statusLabel = (status: ProspectStatus): string => {
     switch (status) {
       case 'new': return t.prospectStatusNew;
       case 'contacted': return t.prospectStatusContacted;
       case 'converted': return t.prospectStatusConverted;
       case 'not_interested': return t.prospectStatusNotInterested;
+      default: return status;
     }
   };
 
