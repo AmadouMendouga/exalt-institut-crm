@@ -17,12 +17,16 @@ import {
   MessageCircle,
   Cake,
   Download,
+  ChevronDown,
+  FileSpreadsheet,
+  FileText,
   X
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Client, Gender, ClientStatus } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { downloadCsv } from '../lib/exportCsv';
+import { downloadProfessionalExcel } from '../lib/exportExcel';
 
 interface CustomersScreenProps {
   clients: Client[];
@@ -47,6 +51,7 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const itemsPerPage = 6;
 
   // Filtered clients list
@@ -75,33 +80,150 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
     });
   }, [clients, searchQuery, selectedGender, statusFilter]);
 
-  const handleExport = () => {
+  const clientStatusLabel = (status: ClientStatus) => {
+    if (language === 'en') return status;
+    switch (status) {
+      case 'Follow-up Needed': return 'Relance nécessaire';
+      case 'Up to date': return 'À jour';
+      case 'Pending Response': return 'Réponse en attente';
+    }
+  };
+
+  const handleExportCsv = () => {
     const date = new Date().toISOString().slice(0, 10);
     downloadCsv(
       `clients-exalt-${date}.csv`,
       [
-        { label: 'ID', value: (c: Client) => c.id },
         { label: 'Nom', value: (c: Client) => c.name },
         { label: 'Civilité', value: (c: Client) => c.prefix },
-        { label: 'Sexe', value: (c: Client) => c.gender },
-        { label: 'Email', value: (c: Client) => c.email },
+        { label: 'Genre', value: (c: Client) => c.gender },
         { label: 'Téléphone', value: (c: Client) => c.phone },
-        { label: 'Dernier service', value: (c: Client) => c.lastService },
-        { label: 'Date dernier service', value: (c: Client) => c.lastServiceDate },
-        { label: 'Date brute', value: (c: Client) => c.rawDate },
-        { label: 'Statut', value: (c: Client) => c.status },
-        { label: 'Upsell suggéré', value: (c: Client) => c.suggestedUpsell },
-        { label: 'Canal préféré', value: (c: Client) => c.preferredChannel },
+        { label: 'Email', value: (c: Client) => c.email },
+        { label: 'Dernière prestation', value: (c: Client) => c.lastService },
+        { label: 'Date dernière prestation', value: (c: Client) => c.rawDate },
+        { label: 'Statut', value: (c: Client) => clientStatusLabel(c.status) },
         { label: 'Nombre de visites', value: (c: Client) => c.totalVisits },
         { label: 'Total dépensé (FCFA)', value: (c: Client) => c.totalSpent },
-        { label: 'Date de naissance', value: (c: Client) => c.birthDate || '' },
+        { label: 'Canal préféré', value: (c: Client) => c.preferredChannel },
         { label: 'Consentement marketing', value: (c: Client) => c.marketingOptIn ? 'Oui' : 'Non' },
+        { label: 'Date de naissance', value: (c: Client) => c.birthDate || '' },
         { label: 'Prochain rappel', value: (c: Client) => c.nextReminderDate || '' },
         { label: 'Note du rappel', value: (c: Client) => c.nextReminderNote || '' },
+        { label: 'Upsell suggéré', value: (c: Client) => c.suggestedUpsell },
         { label: 'Notes', value: (c: Client) => c.notes || '' },
+        { label: 'ID Client', value: (c: Client) => c.id },
       ],
       filteredClients
     );
+  };
+
+  const handleExportExcel = () => {
+    const date = new Date().toISOString().slice(0, 10);
+    const total = filteredClients.length;
+    const femaleCount = filteredClients.filter((c) => c.gender === 'F').length;
+    const maleCount = filteredClients.filter((c) => c.gender === 'M').length;
+    const followUpCount = filteredClients.filter((c) => c.status === 'Follow-up Needed').length;
+    const upToDateCount = filteredClients.filter((c) => c.status === 'Up to date').length;
+    const pendingCount = filteredClients.filter((c) => c.status === 'Pending Response').length;
+    const totalSpent = filteredClients.reduce((sum, c) => sum + (c.totalSpent || 0), 0);
+    const totalVisits = filteredClients.reduce((sum, c) => sum + (c.totalVisits || 0), 0);
+    const optInCount = filteredClients.filter((c) => c.marketingOptIn).length;
+
+    const channelCounts = Array.from(
+      filteredClients.reduce((map, c) => {
+        map.set(c.preferredChannel || 'Non renseigné', (map.get(c.preferredChannel || 'Non renseigné') || 0) + 1);
+        return map;
+      }, new Map<string, number>())
+    ).sort((a, b) => b[1] - a[1]);
+
+    downloadProfessionalExcel({
+      filename: `clients-exalt-${date}.xlsx`,
+      dataSheetName: 'Clients',
+      tableName: 'ClientsExalt',
+      rows: filteredClients,
+      columns: [
+        { header: 'Nom', width: 24, value: (c: Client) => c.name },
+        { header: 'Civilité', width: 11, value: (c: Client) => c.prefix },
+        { header: 'Genre', width: 10, value: (c: Client) => c.gender },
+        { header: 'Téléphone', width: 19, value: (c: Client) => c.phone },
+        { header: 'Email', width: 30, value: (c: Client) => c.email },
+        { header: 'Dernière prestation', width: 30, value: (c: Client) => c.lastService },
+        { header: 'Date dernière prestation', width: 21, kind: 'date', value: (c: Client) => c.rawDate },
+        {
+          header: 'Statut',
+          width: 21,
+          value: (c: Client) => clientStatusLabel(c.status),
+          style: (c: Client) =>
+            c.status === 'Follow-up Needed' ? 'warning' :
+            c.status === 'Up to date' ? 'converted' :
+            'contacted',
+        },
+        { header: 'Nombre de visites', width: 17, kind: 'number', value: (c: Client) => c.totalVisits },
+        { header: 'Total dépensé', width: 18, kind: 'currency', value: (c: Client) => c.totalSpent },
+        { header: 'Canal préféré', width: 16, value: (c: Client) => c.preferredChannel },
+        {
+          header: 'Consentement marketing',
+          width: 23,
+          value: (c: Client) => c.marketingOptIn ? 'Oui' : 'Non',
+          style: (c: Client) => c.marketingOptIn ? 'sent' : 'warning',
+        },
+        { header: 'Date de naissance', width: 18, kind: 'date', value: (c: Client) => c.birthDate || '' },
+        { header: 'Prochain rappel', width: 18, kind: 'date', value: (c: Client) => c.nextReminderDate || '' },
+        { header: 'Note du rappel', width: 34, wrap: true, value: (c: Client) => c.nextReminderNote || '' },
+        { header: 'Upsell suggéré', width: 28, wrap: true, value: (c: Client) => c.suggestedUpsell },
+        { header: 'Notes', width: 38, wrap: true, value: (c: Client) => c.notes || '' },
+        { header: 'ID Client', width: 38, value: (c: Client) => c.id },
+      ],
+      summaryTitle: language === 'fr' ? 'Résumé analytique — Clients' : 'Analytical summary — Clients',
+      summaryMetrics: [
+        { label: 'Total clients', value: total },
+        { label: 'Femmes', value: femaleCount },
+        { label: 'Hommes', value: maleCount },
+        { label: 'Relance nécessaire', value: followUpCount },
+        { label: 'À jour', value: upToDateCount },
+        { label: 'Réponse en attente', value: pendingCount },
+        { label: 'Visites cumulées', value: totalVisits },
+        { label: 'Dépenses cumulées', value: totalSpent, kind: 'currency' },
+        { label: 'Dépense moyenne / client', value: total ? Math.round(totalSpent / total) : 0, kind: 'currency' },
+        { label: 'Consentement marketing', value: total ? optInCount / total : 0, kind: 'percent' },
+      ],
+      distributions: [
+        {
+          title: 'Répartition par statut',
+          rows: [
+            { label: 'Relance nécessaire', count: followUpCount, percent: total ? followUpCount / total : 0, style: 'warning' },
+            { label: 'À jour', count: upToDateCount, percent: total ? upToDateCount / total : 0, style: 'converted' },
+            { label: 'Réponse en attente', count: pendingCount, percent: total ? pendingCount / total : 0, style: 'contacted' },
+          ],
+        },
+        {
+          title: 'Répartition par genre',
+          rows: [
+            { label: 'Femmes', count: femaleCount, percent: total ? femaleCount / total : 0 },
+            { label: 'Hommes', count: maleCount, percent: total ? maleCount / total : 0 },
+          ],
+        },
+        {
+          title: 'Répartition par canal préféré',
+          rows: channelCounts.map(([label, count]) => ({
+            label,
+            count,
+            percent: total ? count / total : 0,
+          })),
+        },
+      ],
+      exportInfo: [
+        { label: 'Export effectué le', value: new Date().toLocaleString(language === 'fr' ? 'fr-FR' : 'en-GB') },
+        { label: 'Nombre de lignes exportées', value: total },
+        { label: 'Recherche', value: searchQuery || 'Aucune' },
+        {
+          label: 'Genre',
+          value: selectedGender === 'All' ? 'Tous' : selectedGender === 'F' ? 'Femmes' : 'Hommes',
+        },
+        { label: 'Statut', value: statusFilter === 'All' ? 'Tous' : clientStatusLabel(statusFilter as ClientStatus) },
+        { label: 'Périmètre', value: 'Toutes les lignes correspondant aux filtres actifs, pagination ignorée' },
+      ],
+    });
   };
 
   // Pagination calculation
@@ -170,16 +292,65 @@ export const CustomersScreen: React.FC<CustomersScreenProps> = ({
         </div>
 
         <div className="self-start sm:self-auto flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={handleExport}
-            className="bg-[var(--surface)] border border-[var(--border-color)]/70 hover:border-[var(--accent)] text-stone-700 dark:text-stone-200 text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
-            title={language === 'fr' ? 'Exporter les clients filtrés en CSV' : 'Export filtered clients to CSV'}
-          >
-            <Download className="w-4 h-4" />
-            <span>{language === 'fr' ? 'Exporter CSV' : 'Export CSV'}</span>
-            <span className="text-[10px] text-stone-400 dark:text-stone-500">({filteredClients.length})</span>
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setExportMenuOpen((open) => !open)}
+              className="bg-[var(--surface)] border border-[var(--border-color)]/70 hover:border-[var(--accent)] text-stone-700 dark:text-stone-200 text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+              title={language === 'fr' ? 'Télécharger les clients filtrés' : 'Download filtered clients'}
+            >
+              <Download className="w-4 h-4" />
+              <span>{language === 'fr' ? 'Télécharger' : 'Download'}</span>
+              <span className="text-[10px] text-stone-400 dark:text-stone-500">({filteredClients.length})</span>
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+
+            <AnimatePresence>
+              {exportMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.12 }}
+                  className="absolute right-0 mt-1.5 w-72 bg-[var(--surface)] rounded-xl shadow-xl border border-[var(--border-color)]/60 p-1.5 z-40"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExportExcel();
+                      setExportMenuOpen(false);
+                    }}
+                    className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-[var(--surface-alt)] cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 mt-0.5 text-emerald-600 dark:text-emerald-300 shrink-0" />
+                    <span>
+                      <span className="block text-xs font-semibold text-[var(--text-primary)]">Excel professionnel (.xlsx)</span>
+                      <span className="block text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                        Couleurs, filtres, dates, résumé et informations d’export
+                      </span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExportCsv();
+                      setExportMenuOpen(false);
+                    }}
+                    className="w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-[var(--surface-alt)] cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 mt-0.5 text-stone-500 shrink-0" />
+                    <span>
+                      <span className="block text-xs font-semibold text-[var(--text-primary)]">CSV brut (.csv)</span>
+                      <span className="block text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                        Format léger pour Python, Power BI ou import de données
+                      </span>
+                    </span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <button
             onClick={onOpenAddClient}
             className="bg-[var(--accent)] hover:bg-[var(--accent-dark)] text-white text-xs sm:text-sm font-semibold py-2 px-3.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
