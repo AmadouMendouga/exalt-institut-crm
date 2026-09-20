@@ -116,6 +116,14 @@ class TimelineItem(Base):
     scheduled_at: Mapped[datetime] = mapped_column(default=_now)
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
+    # Corrélation avec la passerelle SMS Gate : gateway_message_id est l'id renvoyé
+    # par l'API à l'envoi, utilisé pour rattacher les webhooks sms:sent/delivered/failed
+    # reçus plus tard. delivery_status vaut None (hors SMS), "sent", "delivered" ou
+    # "failed" ; delivery_detail porte la raison d'échec le cas échéant.
+    gateway_message_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    delivery_status: Mapped[str | None] = mapped_column(String, nullable=True)
+    delivery_detail: Mapped[str | None] = mapped_column(String, nullable=True)
+
     campaign_id: Mapped[str | None] = mapped_column(ForeignKey("automation_campaigns.id"), nullable=True)
     campaign: Mapped[AutomationCampaign | None] = relationship(back_populates="timeline_items")
 
@@ -188,6 +196,9 @@ class Prospect(Base):
     # WhatsApp est toujours "sent" (pas de retour d'échec possible côté serveur),
     # SMS reflète le vrai statut renvoyé par la passerelle.
     last_relance_channel: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Mêmes champs de corrélation webhook que TimelineItem (voir ce modèle).
+    gateway_message_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    delivery_detail: Mapped[str | None] = mapped_column(String, nullable=True)
     last_relance_status: Mapped[str | None] = mapped_column(String, nullable=True)
     converted_client_id: Mapped[str | None] = mapped_column(ForeignKey("clients.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=_now)

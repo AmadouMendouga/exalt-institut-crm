@@ -59,10 +59,13 @@ def bulk_send_prospect_sms(payload: ProspectBulkSmsRequest, db: Session = Depend
         prospect = db.query(models.Prospect).filter(models.Prospect.id == item.id).first()
         if not prospect:
             continue
-        ok = sms.send_sms(prospect.phone, item.message)
+        message_id = sms.send_sms(prospect.phone, item.message)
+        ok = bool(message_id)
         prospect.last_relance_channel = "SMS"
         prospect.last_relance_status = "sent" if ok else "failed"
         prospect.last_relance_at = datetime.now(timezone.utc)
+        prospect.gateway_message_id = message_id
+        prospect.delivery_detail = None
         if ok:
             prospect.status = "contacted"
         touched.append(prospect)
@@ -116,10 +119,13 @@ def send_prospect_sms(prospect_id: str, payload: ProspectSmsRequest, db: Session
     if not sms.is_configured():
         raise HTTPException(status_code=400, detail="SMS gateway not configured")
 
-    ok = sms.send_sms(prospect.phone, payload.message)
+    message_id = sms.send_sms(prospect.phone, payload.message)
+    ok = bool(message_id)
     prospect.last_relance_channel = "SMS"
     prospect.last_relance_status = "sent" if ok else "failed"
     prospect.last_relance_at = datetime.now(timezone.utc)
+    prospect.gateway_message_id = message_id
+    prospect.delivery_detail = None
     if ok:
         prospect.status = "contacted"
     db.commit()

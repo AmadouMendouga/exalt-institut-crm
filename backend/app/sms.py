@@ -22,11 +22,17 @@ def is_configured() -> bool:
     return bool(settings.sms_gateway_login and settings.sms_gateway_password)
 
 
-def send_sms(phone: str, message: str) -> bool:
-    """Tente un envoi réel via la passerelle. Retourne True si acceptée (statut 2xx)."""
+def send_sms(phone: str, message: str) -> str | None:
+    """Tente un envoi réel via la passerelle.
+
+    Retourne l'id du message (champ "id" de la réponse JSON de l'API) si la
+    passerelle a accepté l'envoi (statut 2xx), pour permettre de rattacher plus
+    tard les webhooks sms:sent/delivered/failed à ce message précis. Retourne
+    None si l'envoi n'a pas été accepté (voir les logs [sms] pour la raison).
+    """
 
     if not is_configured():
-        return False
+        return None
 
     digits = "".join(ch for ch in phone if ch.isdigit() or ch == "+")
     credentials = f"{settings.sms_gateway_login}:{settings.sms_gateway_password}".encode()
@@ -49,13 +55,20 @@ def send_sms(phone: str, message: str) -> bool:
     )
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
-            ok = 200 <= response.status < 300
-            if not ok:
-                print(f"[sms] unexpected status={response.status} body={response.read()}")
-            return ok
+            raw = response.read()
+            if not (200 <= response.status < 300):
+                print(f"[sms] unexpected status={response.status} body={raw}")
+                return None
+            try:
+                message_id = json.loads(raw).get("id")
+            except (json.JSONDecodeError, AttributeError):
+                message_id = None
+            if not message_id:
+                print(f"[sms] accepted but no message id in response body={raw}")
+            return message_id
     except urllib.error.HTTPError as e:
         print(f"[sms] HTTPError status={e.code} body={e.read()}")
-        return False
+        return None
     except urllib.error.URLError as e:
         print(f"[sms] URLError reason={e.reason}")
-        return False
+        return None

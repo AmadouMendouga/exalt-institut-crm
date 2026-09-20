@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     sms_gateway_login: str | None = None
     sms_gateway_password: str | None = None
+    sms_gateway_webhook_secret: str | None = None
     institute_whatsapp_phone: str | None = None
 
     model_config = SettingsConfigDict(

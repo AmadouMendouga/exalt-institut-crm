@@ -155,6 +155,9 @@ class TimelineItemOut(BaseModel):
     created_at: datetime
     campaign_id: str | None = None
     client_id: str | None = None
+    gateway_message_id: str | None = None
+    delivery_status: str | None = None
+    delivery_detail: str | None = None
 
 
 class RelanceSendRequest(BaseModel):
@@ -329,6 +332,8 @@ class ProspectOut(ProspectBase):
     last_relance_at: datetime | None = None
     last_relance_channel: str | None = None
     last_relance_status: str | None = None
+    gateway_message_id: str | None = None
+    delivery_detail: str | None = None
     converted_client_id: str | None = None
     created_at: datetime
     updated_at: datetime

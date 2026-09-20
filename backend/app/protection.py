@@ -14,6 +14,7 @@ LIMITS = {
     '/api/reviews': 10,
     '/api/appointments': 10,
     '/api/birthday-submissions': 10,
+    '/api/webhooks/sms-gateway': 120,
 }
 
 

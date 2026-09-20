@@ -57,8 +57,11 @@ def send_relance(payload: RelanceSendRequest, db: Session = Depends(get_db)):
         if draft.status != "Drafts":
             raise HTTPException(status_code=409, detail="Cette relance a déjà été traitée.")
 
-    if payload.channel == "SMS" and not sms.send_sms(client.phone, payload.message):
-        raise HTTPException(status_code=502, detail="SMS gateway error")
+    gateway_message_id = None
+    if payload.channel == "SMS":
+        gateway_message_id = sms.send_sms(client.phone, payload.message)
+        if not gateway_message_id:
+            raise HTTPException(status_code=502, detail="SMS gateway error")
 
     if draft:
         # Finalisation d'un brouillon généré par une automatisation (ex. relance
@@ -70,6 +73,9 @@ def send_relance(payload: RelanceSendRequest, db: Session = Depends(get_db)):
         draft.channel = payload.channel
         draft.status = "Past 7 Days"
         draft.scheduled_at = now
+        draft.gateway_message_id = gateway_message_id
+        draft.delivery_status = "sent" if payload.channel == "SMS" else None
+        draft.delivery_detail = None
         if draft.campaign_id:
             campaign = (
                 db.query(models.AutomationCampaign)
@@ -96,6 +102,8 @@ def send_relance(payload: RelanceSendRequest, db: Session = Depends(get_db)):
             status="Past 7 Days",
             scheduled_at=now,
             client_id=client.id,
+            gateway_message_id=gateway_message_id,
+            delivery_status="sent" if payload.channel == "SMS" else None,
         )
         db.add(timeline_item)
 

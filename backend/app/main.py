@@ -26,6 +26,7 @@ from .routers import (
     reviews,
     services,
     timeline,
+    webhooks,
 )
 
 logger = logging.getLogger("app.automation")
@@ -67,6 +68,7 @@ app.include_router(appointments.router)
 app.include_router(prospects.router)
 app.include_router(campaign_media.router)
 app.include_router(birthdays.router)
+app.include_router(webhooks.router)
 
 
 @app.get("/avis", response_class=HTMLResponse, include_in_schema=False)
