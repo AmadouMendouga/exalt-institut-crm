@@ -49,6 +49,13 @@ def send_sms(phone: str, message: str) -> bool:
     )
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
-            return 200 <= response.status < 300
-    except urllib.error.URLError:
+            ok = 200 <= response.status < 300
+            if not ok:
+                print(f"[sms] unexpected status={response.status} body={response.read()}")
+            return ok
+    except urllib.error.HTTPError as e:
+        print(f"[sms] HTTPError status={e.code} body={e.read()}")
+        return False
+    except urllib.error.URLError as e:
+        print(f"[sms] URLError reason={e.reason}")
         return False
