@@ -1,5 +1,48 @@
 # Service CRM
 
+## Fiabilité et déploiement — septembre 2026
+
+Les canaux non configurés ne sont plus simulés comme des envois réussis :
+Email retourne une erreur explicite et SMS nécessite une passerelle configurée.
+Un succès SMS signifie seulement « accepté par la passerelle », sans preuve de
+réception. WhatsApp reste une action manuelle à confirmer dans WhatsApp.
+Les compteurs historiques sont conservés, mais peuvent inclure des simulations ;
+les ouvertures et conversions non mesurées sont masquées dans Analytics.
+
+Le journal d'automatisation renseigne désormais `dispatched_at`, obligatoire
+depuis la migration initiale. Les déclenchements concurrents sont sérialisés
+par PostgreSQL. Les anniversaires sont limités à leur fenêtre locale UTC+1.
+Une erreur SMS ne consomme plus définitivement l'occurrence.
+
+Railway : garder le Dockerfile existant, qui applique les migrations avant le
+démarrage. La nouvelle migration ajoute uniquement une table de limitation de
+débit (10 POST/minute/IP/route pour connexion et formulaires publics).
+Vérifier la configuration des proxies de confiance d'Uvicorn : ne pas accepter
+les en-têtes forwarded d'une origine non fiable. La limite repose sur l'adresse
+ASGI obtenue après cette configuration.
+
+Variables : `PUBLIC_APP_URL=https://exalt-beauty.up.railway.app`,
+`AUTOMATION_ENABLED=true` par défaut. Pour un worker Railway séparé, définir
+`AUTOMATION_ENABLED=false` sur le service web et lancer `python -m app.worker`
+dans `/app/backend` sur le worker, après migration. Les deux partagent la base.
+Le worker est optionnel : le comportement d'un service unique reste supporté.
+
+Validation : `npm run lint`, `npm run build`, puis depuis `backend`,
+`python -m pytest tests -q` (installer pytest et httpx). GitHub Actions teste
+aussi les migrations sur PostgreSQL et les réservations concurrentes.
+Ne jamais utiliser la base de production comme `TEST_DATABASE_URL`.
+
+Limites restantes : pas de réception SMS vérifiée, ni d'envoi email ou WhatsApp
+Business automatique. Une panne après acceptation SMS mais avant commit peut
+encore produire un doublon ; une outbox et l'idempotence fournisseur sont
+nécessaires pour aller plus loin. Les anciennes statistiques ne permettent pas
+de reconstituer les réceptions réelles. Les rôles, paiements/factures, ressources
+du planning, pagination serveur et sauvegardes restent des chantiers distincts.
+Ne pas fusionner avant succès des contrôles CI et sauvegarde Railway vérifiée.
+
+Les paragraphes historiques ci-dessous décrivant les simulations ou statistiques
+de démonstration sont remplacés par les règles de cette section.
+
 Plateforme CRM marketing bilingue (Français / Anglais) pour le suivi client, les relances automatisées et les campagnes ciblées.
 
 Application React (Vite) + API FastAPI (Python) + PostgreSQL (via SQLAlchemy/Alembic), avec authentification par session et envoi de relances via WhatsApp (liens `wa.me`).

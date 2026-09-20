@@ -1,14 +1,15 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic.alias_generators import to_camel
 
 CamelModel = ConfigDict(alias_generator=to_camel, populate_by_name=True, from_attributes=True)
 
 
 class LoginRequest(BaseModel):
-    email: str
-    password: str
+    email: str = Field(min_length=1, max_length=254)
+    password: str = Field(min_length=1, max_length=256)
 
 
 class UserOut(BaseModel):
@@ -55,7 +56,7 @@ class ClientUpdate(ClientBase):
 class ClientStatusUpdate(BaseModel):
     model_config = CamelModel
 
-    status: str
+    status: Literal['Follow-up Needed', 'Up to date', 'Pending Response']
 
 
 class ClientOptInUpdate(BaseModel):
@@ -120,10 +121,16 @@ class CampaignBase(BaseModel):
 
 
 class CampaignCreate(CampaignBase):
-    pass
+    delay_time: int = Field(ge=0, le=366)
+    delay_unit: Literal['Days', 'Weeks', 'Hours']
+    channel: Literal['WhatsApp', 'SMS', 'Email']
+    action_event: Literal['After a Service', 'New Client Registration', 'Inactivity Period', 'Birthday']
+    status: Literal['active', 'paused', 'draft'] = 'active'
+    name: str = Field(min_length=1, max_length=200)
+    message_body: str = Field(min_length=1, max_length=10000)
 
 
-class CampaignUpdate(CampaignBase):
+class CampaignUpdate(CampaignCreate):
     pass
 
 
@@ -154,8 +161,8 @@ class RelanceSendRequest(BaseModel):
     model_config = CamelModel
 
     client_id: str
-    channel: str
-    message: str
+    channel: Literal['WhatsApp', 'SMS', 'Email']
+    message: str = Field(min_length=1, max_length=10000)
     language: str = "fr"
     timeline_item_id: str | None = None
 
@@ -179,7 +186,7 @@ class ReviewCreate(BaseModel):
     model_config = CamelModel
 
     rating: int
-    comment: str | None = None
+    comment: str | None = Field(default=None, max_length=5000)
     client_id: str | None = None
 
 
@@ -216,10 +223,16 @@ class AvailabilityRuleOut(BaseModel):
 class AvailabilityRuleUpdate(BaseModel):
     model_config = CamelModel
 
-    weekday: int
+    weekday: int = Field(ge=0, le=6)
     is_closed: bool
-    open_minutes: int
-    close_minutes: int
+    open_minutes: int = Field(ge=0, lt=1440)
+    close_minutes: int = Field(gt=0, le=1440)
+
+    @model_validator(mode='after')
+    def valid_hours(self):
+        if not self.is_closed and self.open_minutes >= self.close_minutes:
+            raise ValueError('Closing time must follow opening time')
+        return self
 
 
 class AppointmentServiceItem(BaseModel):
@@ -232,13 +245,13 @@ class AppointmentServiceItem(BaseModel):
 class AppointmentCreate(BaseModel):
     model_config = CamelModel
 
-    client_name: str
-    client_phone: str
+    client_name: str = Field(min_length=1, max_length=200)
+    client_phone: str = Field(min_length=6, max_length=30)
     client_id: str | None = None
-    service_ids: list[str]
+    service_ids: list[str] = Field(min_length=1, max_length=20)
     date: str  # "YYYY-MM-DD"
     time: str  # "HH:MM"
-    note: str | None = None
+    note: str | None = Field(default=None, max_length=5000)
 
 
 class AppointmentOut(BaseModel):
@@ -285,29 +298,29 @@ class ProspectUpdate(ProspectBase):
 class ProspectStatusUpdate(BaseModel):
     model_config = CamelModel
 
-    status: str
+    status: Literal['new', 'contacted', 'converted', 'not_interested']
     # Renseigné quand status == "contacted" par un envoi WhatsApp (pas d'appel
     # serveur pour ce canal, donc c'est le frontend qui déclare le canal utilisé).
-    channel: str | None = None
+    channel: Literal['WhatsApp', 'SMS'] | None = None
 
 
 class ProspectSmsRequest(BaseModel):
     model_config = CamelModel
 
-    message: str
+    message: str = Field(min_length=1, max_length=1600)
 
 
 class ProspectBulkSmsItem(BaseModel):
     model_config = CamelModel
 
     id: str
-    message: str
+    message: str = Field(min_length=1, max_length=1600)
 
 
 class ProspectBulkSmsRequest(BaseModel):
     model_config = CamelModel
 
-    items: list[ProspectBulkSmsItem]
+    items: list[ProspectBulkSmsItem] = Field(min_length=1, max_length=50)
 
 
 class ProspectOut(ProspectBase):
@@ -350,7 +363,7 @@ class ProspectBulkItem(BaseModel):
 class ProspectBulkCreate(BaseModel):
     model_config = CamelModel
 
-    items: list[ProspectBulkItem]
+    items: list[ProspectBulkItem] = Field(min_length=1, max_length=1000)
 
 
 class CampaignMediaOut(BaseModel):
@@ -371,10 +384,20 @@ class ProspectConvertedUpdate(BaseModel):
 class BirthdaySubmissionCreate(BaseModel):
     model_config = CamelModel
 
-    name: str
-    phone: str
+    name: str = Field(min_length=1, max_length=200)
+    phone: str = Field(min_length=6, max_length=30)
     birth_date: str  # "MM-DD"
     gender: str = "F"  # "F" ou "M"
+
+    @field_validator('birth_date')
+    @classmethod
+    def valid_birthday(cls, value: str) -> str:
+        try:
+            month, day = map(int, value.split('-'))
+            date(2000, month, day)
+        except (ValueError, TypeError):
+            raise ValueError('Birthday must be a valid MM-DD date')
+        return f'{month:02d}-{day:02d}'
 
 
 class BirthdaySubmissionOut(BaseModel):

@@ -1,8 +1,9 @@
 from datetime import date as date_cls
 from datetime import datetime, time
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from .. import availability, models
 from ..database import get_db
@@ -28,7 +29,7 @@ def list_public_services(db: Session = Depends(get_db)):
 
 
 @router.get("/api/public/slots")
-def list_public_slots(date: str, service_count: int = 1, db: Session = Depends(get_db)):
+def list_public_slots(date: str, service_count: int = Query(default=1, ge=1, le=20), db: Session = Depends(get_db)):
     """Public endpoint: available time slots for a given day, sized to the cart (service_count soins)."""
     try:
         target_date = date_cls.fromisoformat(date)
@@ -49,7 +50,7 @@ def create_appointment(payload: AppointmentCreate, db: Session = Depends(get_db)
     services = db.query(models.Service).filter(models.Service.id.in_(payload.service_ids)).all()
     services_by_id = {s.id: s for s in services}
     ordered_services = [services_by_id[sid] for sid in payload.service_ids if sid in services_by_id]
-    if not ordered_services:
+    if not ordered_services or len(ordered_services) != len(payload.service_ids) or len(set(payload.service_ids)) != len(payload.service_ids):
         raise HTTPException(status_code=422, detail="Service not found")
 
     try:
@@ -63,6 +64,9 @@ def create_appointment(payload: AppointmentCreate, db: Session = Depends(get_db)
         raise HTTPException(status_code=422, detail="Ce créneau est déjà passé")
 
     duration = availability.DEFAULT_DURATION_MINUTES * len(ordered_services)
+    availability.ensure_default_rules(db)
+    # All booking/status writers take this transaction lock before checking slots.
+    db.execute(text("SELECT pg_advisory_xact_lock(78342109)"))
     still_free = payload.time in availability.compute_available_slots(db, target_date, duration)
     if not still_free:
         raise HTTPException(status_code=409, detail="Ce créneau vient d'être pris, choisissez-en un autre")
@@ -100,9 +104,15 @@ def list_appointments(db: Session = Depends(get_db)):
 def update_appointment_status(appointment_id: str, payload: AppointmentStatusUpdate, db: Session = Depends(get_db)):
     if payload.status not in VALID_STATUSES:
         raise HTTPException(status_code=422, detail="Invalid status")
+    availability.ensure_default_rules(db)
+    db.execute(text("SELECT pg_advisory_xact_lock(78342109)"))
     appointment = db.query(models.Appointment).filter(models.Appointment.id == appointment_id).first()
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
+    if payload.status in {"Pending", "Confirmed"} and appointment.status not in {"Pending", "Confirmed"}:
+        slots = availability.compute_available_slots(db, appointment.starts_at.date(), appointment.duration_minutes)
+        if appointment.starts_at.strftime("%H:%M") not in slots:
+            raise HTTPException(status_code=409, detail="Ce créneau n'est plus disponible.")
     appointment.status = payload.status
     db.commit()
     db.refresh(appointment)

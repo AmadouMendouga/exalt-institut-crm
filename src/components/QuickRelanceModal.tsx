@@ -141,7 +141,7 @@ export const QuickRelanceModal: React.FC<QuickRelanceModalProps> = ({
   };
 
   const handleSendClick = () => {
-    if (!client || sendStatus !== 'idle') return;
+    if (!client || sendStatus !== 'idle' || !client.marketingOptIn) return;
 
     // Navigation directe (pas window.open) : sur certains navigateurs Android
     // (Samsung Internet notamment), le passage par un nouvel onglet avant le
@@ -168,6 +168,9 @@ export const QuickRelanceModal: React.FC<QuickRelanceModalProps> = ({
     <Modal isOpen={isOpen} onClose={onClose} maxWidthClassName="max-w-xl">
       {client && (
         <>
+          {!client.marketingOptIn && <p role="alert" className="p-4 text-sm text-red-700 dark:text-red-300">
+            {language === 'fr' ? 'Consentement marketing désactivé : cette relance est bloquée.' : 'Marketing consent is disabled: this follow-up is blocked.'}
+          </p>}
           {/* Modal Header */}
           <div className="px-6 py-4 bg-[var(--surface-alt)] border-b border-[var(--border-color)]/50 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -375,6 +378,7 @@ export const QuickRelanceModal: React.FC<QuickRelanceModalProps> = ({
             </button>
 
             <StatefulButton
+              disabled={!client.marketingOptIn}
               status={sendStatus}
               onClick={handleSendClick}
               loadingText={t.sendingInProgress}

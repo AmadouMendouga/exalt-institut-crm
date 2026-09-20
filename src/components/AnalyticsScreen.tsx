@@ -72,10 +72,13 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ campaigns, tim
 
         <div className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--border-color)]/70 rounded-lg px-3 py-1.5 text-xs font-semibold text-stone-700 dark:text-stone-200 shadow-2xs">
           <Calendar className="w-3.5 h-3.5 text-stone-500 dark:text-stone-400" />
-          <span>{t.last30Days}</span>
+          <span>{language === 'fr' ? 'Historique disponible' : 'Available history'}</span>
         </div>
       </div>
 
+      <p className="text-sm text-[var(--text-muted)]" role="note">
+        {language === 'fr' ? 'Les relances sont des actions enregistrées, pas des preuves de réception. Les ouvertures et conversions ne sont pas mesurées. Les compteurs historiques peuvent inclure des simulations.' : 'Follow-ups are recorded actions, not delivery receipts. Opens and conversions are not tracked. Historical counters may include simulations.'}
+      </p>
       {/* 4 Summary Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Sent */}
@@ -99,7 +102,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ campaigns, tim
             <Eye className="w-4 h-4 text-indigo-600 dark:text-indigo-300" />
           </div>
           <div className="font-headline text-3xl font-bold text-[var(--text-primary)]">
-            <motion.span ref={openRate.ref}>{openRate.display}</motion.span>
+            <span>{language === 'fr' ? 'Non mesuré' : 'Not tracked'}</span>
           </div>
           <div className="flex items-center gap-1 text-stone-400 dark:text-stone-500 text-xs font-medium mt-1">
             <span>{t.activeCampaignsCaption}</span>
@@ -113,7 +116,7 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ campaigns, tim
             <MousePointerClick className="w-4 h-4 text-amber-600 dark:text-amber-300" />
           </div>
           <div className="font-headline text-3xl font-bold text-[var(--text-primary)]">
-            <motion.span ref={conversionRate.ref}>{conversionRate.display}</motion.span>
+            <span>{language === 'fr' ? 'Non mesuré' : 'Not tracked'}</span>
           </div>
           <div className="flex items-center gap-1 text-stone-400 dark:text-stone-500 text-xs font-medium mt-1">
             <span>{t.activeCampaignsCaption}</span>
@@ -191,13 +194,13 @@ export const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ campaigns, tim
                       {c.stats.sent.toLocaleString()}
                     </td>
                     <td className="py-3.5 px-6 font-mono-code text-stone-600 dark:text-stone-300">
-                      {c.stats.opened.toLocaleString()}
+                      —
                     </td>
                     <td className="py-3.5 px-6 font-mono-code text-emerald-700 dark:text-emerald-200 font-bold">
-                      {c.stats.converted.toLocaleString()}
+                      —
                     </td>
                     <td className="py-3.5 px-6 text-right">
-                      <span className="font-bold text-[var(--accent)]">{convRate}%</span>
+                      <span className="font-bold text-[var(--accent)]">—</span>
                     </td>
                   </motion.tr>
                 );

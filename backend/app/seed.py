@@ -303,7 +303,11 @@ def seed_campaigns_and_timeline(db):
 
     if db.query(models.AutomationCampaign).count() == 0:
         for data in INITIAL_CAMPAIGNS:
+            data = dict(data)
             key = data.pop("key")
+            data['stats'] = {'sent': 0, 'opened': 0, 'clicked': 0, 'converted': 0}
+            data['last_triggered'] = None
+            data['status'] = 'draft'
             campaign = models.AutomationCampaign(**data)
             db.add(campaign)
             db.flush()

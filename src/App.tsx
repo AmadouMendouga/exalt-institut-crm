@@ -179,7 +179,12 @@ export default function App() {
 
   // Ouverture de l'envoi groupé WhatsApp depuis la sélection multiple de l'écran Clients
   const handleOpenBulkRelance = (selected: Client[]) => {
-    setBulkRelanceClients(selected);
+    const eligible = selected.filter((client) => client.marketingOptIn);
+    if (eligible.length !== selected.length) {
+      addToast('warning', language === 'fr' ? 'Clients sans consentement exclus' : 'Clients without consent excluded');
+    }
+    if (!eligible.length) return;
+    setBulkRelanceClients(eligible);
     setIsBulkRelanceOpen(true);
   };
 
@@ -205,13 +210,14 @@ export default function App() {
       const destination = channel === 'Email' ? client.email : client.phone;
       addToast(
         'success',
-        language === 'fr' ? `Relance ${channel} transmise avec succès` : `${channel} follow-up sent successfully`,
+        language === 'fr' ? `Relance ${channel} enregistrée` : `${channel} follow-up recorded`,
         language === 'fr'
-          ? `Message transmis à ${client.prefix} ${client.name} via ${channel} (${destination}).`
-          : `Message dispatched to ${client.prefix} ${client.name} via ${channel} (${destination}).`
+          ? (channel === 'WhatsApp' ? 'Validez l’envoi dans WhatsApp. Réception non confirmée.' : `Message accepté par la passerelle pour ${destination}. Réception non confirmée.`)
+          : (channel === 'WhatsApp' ? 'Confirm sending in WhatsApp. Delivery unconfirmed.' : `Gateway accepted the message for ${destination}. Delivery unconfirmed.`)
       );
     } catch (err) {
       reportError(err);
+      throw err;
     }
   };
 

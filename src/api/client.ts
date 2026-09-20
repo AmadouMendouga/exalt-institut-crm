@@ -11,6 +11,8 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
     try {
       const data = await res.json();
       if (data?.error) message = data.error;
+      else if (typeof data?.detail === 'string') message = data.detail;
+      else if (Array.isArray(data?.detail)) message = data.detail.map((e: { msg: string }) => e.msg).join('; ');
     } catch {
       // response had no JSON body
     }

@@ -57,7 +57,12 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   // Currently editing campaign (default to first active one)
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>(campaigns[0]?.id || 'camp-1');
 
-  const activeCampaign = campaigns.find(c => c.id === selectedCampaignId) || campaigns[0];
+  const activeCampaign: AutomationCampaign = campaigns.find(c => c.id === selectedCampaignId) || campaigns[0] || {
+    id: '', name: '', category: 'Post-Service', actionEvent: 'After a Service',
+    delayTime: 3, delayUnit: 'Days', channel: 'WhatsApp', subjectLine: '', messageBody: '',
+    ctaText: '', ctaUrl: '', status: 'draft', targetAudience: '',
+    stats: { sent: 0, opened: 0, clicked: 0, converted: 0 }
+  };
 
   // Local draft states for live editing
   const [actionEvent, setActionEvent] = useState(activeCampaign.actionEvent);
