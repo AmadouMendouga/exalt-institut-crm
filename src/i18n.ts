@@ -1,5 +1,4 @@
-cd "D:\Mes projets\En cours\exalt-institut-crm"
-git statusexport type Language = 'fr' | 'en';
+export type Language = 'fr' | 'en';
 
 export const translations = {
   fr: {
